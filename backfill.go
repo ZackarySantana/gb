@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -23,7 +21,7 @@ func (cmd *cmd) Backfill() *cli.Command {
 			&cli.StringArg{Name: "since", UsageText: "<git ref>"},
 		},
 		Flags: []cli.Flag{
-			&cli.BoolFlag{Name: "force", Usage: "re-benchmark even if note(s) exists"},
+			&cli.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "re-benchmark even if note(s) exists"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			notesRef := c.String("notes-ref")
@@ -44,52 +42,20 @@ func (cmd *cmd) Backfill() *cli.Command {
 			var done, skipped, failed int
 			start := time.Now()
 
+			benchmarkArgs := benchmarkCommand(c)
+			cmd.logger.DebugContext(ctx, "benchmark command", "args", strings.Join(benchmarkArgs, " "))
 			for _, commit := range commits {
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-				default:
-				}
-
-				has, err := gitNoteExists(ctx, notesRef, commit)
+				isSkipped, err := cmd.benchmark(ctx, notesRef, commit, benchmarkArgs, force)
 				if err != nil {
+					cmd.logger.ErrorContext(ctx, "benchmark failed", "error", err, "commit", commit)
 					failed++
-					cmd.logger.ErrorContext(ctx, "git note exists failed", "commit", commit, "error", err)
 					continue
 				}
-				if has {
-					if !force {
-						skipped++
-						cmd.logger.DebugContext(ctx, "note exists, skipping", "commit", commit)
-						continue
-					}
-					cmd.logger.DebugContext(ctx, "note exists but force enabled, re-benchmarking", "commit", commit)
-				}
-
-				cmd.logger.DebugContext(ctx, "benchmarking", "commit", commit)
-
-				raw, benchArgs, err := runBenchesInWorktree(ctx, commit, c)
-				if err != nil {
-					failed++
-					cmd.logger.ErrorContext(ctx, "benchmark failed", "commit", commit, "error", err)
+				if isSkipped {
+					skipped++
 					continue
 				}
-
-				payload, err := marshalNotePayload(commit, benchArgs, raw)
-				if err != nil {
-					failed++
-					cmd.logger.ErrorContext(ctx, "marshal note failed", "commit", commit, "error", err)
-					continue
-				}
-
-				if err := gitNotesAdd(ctx, notesRef, commit, payload); err != nil {
-					failed++
-					cmd.logger.ErrorContext(ctx, "git notes add failed", "commit", commit, "error", err)
-					continue
-				}
-
 				done++
-				cmd.logger.DebugContext(ctx, "noted", "commit", commit)
 			}
 
 			elapsed := time.Since(start).Truncate(time.Millisecond)
@@ -102,67 +68,45 @@ func (cmd *cmd) Backfill() *cli.Command {
 	}
 }
 
-/* ------------------------------- helpers ---------------------------------- */
-
-func gitRevList(ctx context.Context, rangeSpec string) ([]string, error) {
-	out, err := runCmd(ctx, "", "git", "rev-list", "--reverse", rangeSpec)
-	if err != nil {
-		return nil, err
+func (cmd *cmd) benchmark(ctx context.Context, notesRef, commit string, benchmarkArgs []string, force bool) (skipped bool, failed error) {
+	_, err := gitNotesShow(ctx, notesRef, commit)
+	if err != nil && !errors.Is(err, errNoteMissing) {
+		return false, fmt.Errorf("checking note for commit %s: %w", commit, err)
 	}
-	lines := strings.Fields(string(out))
-	return lines, nil
-}
-
-func gitNoteExists(ctx context.Context, notesRef, commit string) (bool, error) {
-	_, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "show", commit)
-	if err == nil {
-		return true, nil
-	}
-	// exit code != 0 when note missing; differentiate from other errors
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
-		return false, nil
-	}
-	return false, err
-}
-
-func gitNotesAdd(ctx context.Context, notesRef, commit string, payload []byte) error {
-	// We use -f to overwrite if a concurrent run added one; normally it won't exist.
-	_, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "add", "-f", "-m", string(payload), commit)
-	return err
-}
-
-func runBenchesInWorktree(ctx context.Context, commit string, c *cli.Command) ([]byte, []string, error) {
-	// create temp worktree
-	tmp := filepath.Join(os.TempDir(), "gb-wt-"+commit[:8]+"-"+fmt.Sprint(time.Now().UnixNano()))
-	if _, err := runCmd(ctx, "", "git", "worktree", "add", "--detach", tmp, commit); err != nil {
-		return nil, nil, fmt.Errorf("git worktree add: %w", err)
-	}
-	defer func() {
-		_, _ = runCmd(context.Background(), "", "git", "worktree", "remove", "--force", tmp)
-	}()
-
-	args := benchArgsFor(c)
-
-	// run benchmark in that worktree
-	out, err := runCmd(ctx, tmp, "go", args...)
-	if err != nil {
-		// include tail of output for debugging
-		msg := string(out)
-		if len(msg) > 600 {
-			msg = msg[len(msg)-600:]
+	if !errors.Is(err, errNoteMissing) {
+		if !force {
+			cmd.logger.DebugContext(ctx, "note exists, skipping", "commit", commit)
+			return true, nil
 		}
-		return out, args, fmt.Errorf("go %s failed: %v\n…%s", strings.Join(args, " "), err, msg)
+		cmd.logger.DebugContext(ctx, "note exists but force enabled, re-benchmarking", "commit", commit)
 	}
-	return out, args, nil
+
+	cmd.logger.DebugContext(ctx, "benchmarking", "commit", commit)
+
+	raw, err := gitWorktreeRunCommand(ctx, commit, benchmarkArgs)
+	if err != nil {
+		return false, fmt.Errorf("benchmark failed for commit %s: %w", commit, err)
+	}
+
+	payload, err := marshalNotePayload(commit, benchmarkArgs, raw)
+	if err != nil {
+		return false, fmt.Errorf("marshal note failed for commit %s: %w", commit, err)
+	}
+
+	if err := gitNotesAdd(ctx, notesRef, commit, payload); err != nil {
+		return false, fmt.Errorf("git notes add failed for commit %s: %w", commit, err)
+	}
+
+	cmd.logger.DebugContext(ctx, "noted", "commit", commit)
+	return false, nil
 }
 
-func benchArgsFor(c *cli.Command) []string {
+func benchmarkCommand(c *cli.Command) []string {
 	pkgs := c.String("pkgs")
 	if strings.TrimSpace(pkgs) == "" {
 		pkgs = "./..."
 	}
-	args := []string{"test", pkgs, "-run=^$", "-bench", c.String("bench"), "-benchmem"}
+	args := []string{"go", "test", pkgs, "-run=^$", "-bench", c.String("bench"), "-benchmem"}
 	if c.Int("count") > 0 {
 		args = append(args, "-count", fmt.Sprint(c.Int("count")))
 	}
@@ -190,11 +134,4 @@ func marshalNotePayload(commit string, benchArgs []string, raw []byte) ([]byte, 
 		"raw":        string(raw),
 	}
 	return json.Marshal(doc)
-}
-
-func short(sha string) string {
-	if len(sha) > 8 {
-		return sha[:8]
-	}
-	return sha
 }

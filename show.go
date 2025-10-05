@@ -21,7 +21,7 @@ func (cmd *cmd) Show() *cli.Command {
 				return fmt.Errorf("missing required argument: ref")
 			}
 
-			sha, err := resolveCommit(ctx, ref)
+			sha, err := gitResolveCommit(ctx, ref)
 			if err != nil {
 				return fmt.Errorf("resolving commit %s: %w", ref, err)
 			}

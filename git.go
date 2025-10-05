@@ -6,13 +6,71 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
 var (
 	errExit        = errors.New("exit")
 	errNoteMissing = errors.New("note missing")
 )
+
+func gitWorktreeRunCommand(ctx context.Context, commit string, cmd []string) ([]byte, error) {
+	if len(cmd) == 0 {
+		return nil, fmt.Errorf("no benchmark command provided")
+	}
+	base := cmd[0]
+
+	tmp, err := gitWorktreeAdd(ctx, commit)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = gitWorktreeRemove(context.WithoutCancel(ctx), tmp)
+	}()
+
+	var args []string
+	if len(cmd) > 1 {
+		args = cmd[1:]
+	}
+
+	out, err := runCmd(ctx, tmp, base, args...)
+	if err != nil {
+		// Include tail of output for debugging.
+		msg := string(out)
+		if len(msg) > 600 {
+			msg = msg[len(msg)-600:]
+		}
+		return out, fmt.Errorf("go %s failed: %v\n…%s", strings.Join(cmd, " "), err, msg)
+	}
+	return out, nil
+}
+
+func gitWorktreeAdd(ctx context.Context, ref string) (string, error) {
+	tmp := filepath.Join(os.TempDir(), "gb-wt-"+ref[:8]+"-"+fmt.Sprint(time.Now().UnixNano()))
+	_, err := runCmd(ctx, "", "git", "worktree", "add", "--detach", tmp, ref)
+	return tmp, err
+}
+
+func gitWorktreeRemove(ctx context.Context, dir string) error {
+	_, err := runCmd(ctx, "", "git", "worktree", "remove", "--force", dir)
+	return err
+}
+
+func gitRevList(ctx context.Context, rangeSpec string) ([]string, error) {
+	out, err := runCmd(ctx, "", "git", "rev-list", "--reverse", rangeSpec)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Fields(string(out)), nil
+}
+
+func gitNotesAdd(ctx context.Context, notesRef, commit string, payload []byte) error {
+	// We use -f to overwrite if a concurrent run added one; normally it won't exist.
+	_, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "add", "-f", "-m", string(payload), commit)
+	return err
+}
 
 func gitNotesShow(ctx context.Context, notesRef, commit string) ([]byte, error) {
 	out, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "show", commit)
@@ -25,7 +83,7 @@ func gitNotesShow(ctx context.Context, notesRef, commit string) ([]byte, error) 
 	return out, nil
 }
 
-func resolveCommit(ctx context.Context, ref string) (string, error) {
+func gitResolveCommit(ctx context.Context, ref string) (string, error) {
 	out, err := runCmd(ctx, "", "git", "rev-parse", ref)
 	if err != nil {
 		return "", err
@@ -48,7 +106,7 @@ func runCmd(ctx context.Context, dir string, bin string, args ...string) ([]byte
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return nil, err
 		}
-		return nil, fmt.Errorf("%s %s: %w", bin, strings.Join(args, " "), err)
+		return nil, fmt.Errorf("command \"%s %s\" returned: %w", bin, strings.Join(args, " "), err)
 	}
 	return out, nil
 }
