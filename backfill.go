@@ -5,110 +5,96 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/urfave/cli/v3"
 )
 
-func init() {
-	cmds = append(cmds, command{
-		name: cmdBackfill,
-		usages: []string{
-			fmt.Sprintf("%s REF\tBackfill missing notes in REF..HEAD", cmdBackfill),
+func (cmd *cmd) Backfill() *cli.Command {
+	return &cli.Command{
+		Name:  "backfill",
+		Usage: "Backfill benchmark notes with missing commits since a ref",
+		Arguments: []cli.Argument{
+			&cli.StringArg{Name: "since", UsageText: "<git ref>"},
 		},
-		examples: []string{
-			fmt.Sprintf("%s origin/main\tBackfill history", cmdBackfill),
-		},
-		run: func(ctx context.Context, params *commandParams) error {
-			var ref string
-			if err := requireArgs(params.fs.Args(), &ref); err != nil {
-				return err
+		Action: func(ctx context.Context, c *cli.Command) error {
+			fmt.Println("backfill (todo)", "ref", c.StringArg("REF"))
+
+			notesRef := c.String("notes-ref")
+			since := c.StringArg("since")
+
+			cmd.logger.DebugContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"..HEAD")
+
+			commits, err := gitRevList(ctx, since+"..HEAD")
+			if err != nil {
+				return fmt.Errorf("git rev-list: %w", err)
 			}
-			return Backfill(ctx, &BackfillArgs{Root: params.root, Since: ref}, params.logger)
+			if len(commits) == 0 {
+				cmd.logger.InfoContext(ctx, "no commits to backfill")
+				return nil
+			}
+
+			var done, skipped, failed int
+			start := time.Now()
+
+			for _, commit := range commits {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+				}
+
+				has, err := gitNoteExists(ctx, notesRef, commit)
+				if err != nil {
+					failed++
+					cmd.logger.ErrorContext(ctx, "git note exists failed", "commit", commit, "error", err)
+					continue
+				}
+				if has {
+					skipped++
+					cmd.logger.DebugContext(ctx, "note exists, skipping", "commit", commit)
+					continue
+				}
+
+				cmd.logger.DebugContext(ctx, "benchmarking", "commit", commit)
+
+				raw, benchArgs, err := runBenchesInWorktree(ctx, commit, c)
+				if err != nil {
+					failed++
+					cmd.logger.ErrorContext(ctx, "benchmark failed", "commit", commit, "error", err)
+					continue
+				}
+
+				payload, err := marshalNotePayload(commit, benchArgs, raw)
+				if err != nil {
+					failed++
+					cmd.logger.ErrorContext(ctx, "marshal note failed", "commit", commit, "error", err)
+					continue
+				}
+
+				if err := gitNotesAdd(ctx, notesRef, commit, payload); err != nil {
+					failed++
+					cmd.logger.ErrorContext(ctx, "git notes add failed", "commit", commit, "error", err)
+					continue
+				}
+
+				done++
+				cmd.logger.DebugContext(ctx, "noted", "commit", commit)
+			}
+
+			elapsed := time.Since(start).Truncate(time.Millisecond)
+			cmd.logger.InfoContext(ctx, "backfill complete", "noted", done, "skipped", skipped, "failed", failed, "elapsed", elapsed)
+			if failed > 0 {
+				return errors.New("some commits failed to backfill")
+			}
+			return nil
 		},
-	})
-}
-
-const cmdBackfill = "backfill"
-
-type BackfillArgs struct {
-	Root  *RootFlags
-	Since string
-}
-
-// Backfill walks commits since a ref and fills in missing notes.
-func Backfill(ctx context.Context, a *BackfillArgs, logger *slog.Logger) error {
-	ref := a.Root.NotesRef
-
-	logger.DebugContext(ctx, "backfill start", "notes_ref", ref, "range", a.Since+"..HEAD")
-
-	commits, err := gitRevList(ctx, a.Since+"..HEAD")
-	if err != nil {
-		return fmt.Errorf("git rev-list: %w", err)
 	}
-	if len(commits) == 0 {
-		logger.InfoContext(ctx, "no commits to backfill")
-		return nil
-	}
-
-	var done, skipped, failed int
-	start := time.Now()
-
-	for _, c := range commits {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		has, err := gitNoteExists(ctx, ref, c)
-		if err != nil {
-			failed++
-			logger.ErrorContext(ctx, "git note exists failed", "commit", c, "error", err)
-			continue
-		}
-		if has {
-			skipped++
-			logger.DebugContext(ctx, "note exists, skipping", "commit", c)
-			continue
-		}
-
-		logger.DebugContext(ctx, "benchmarking", "commit", c)
-
-		raw, benchArgs, err := runBenchesInWorktree(ctx, c, a.Root)
-		if err != nil {
-			failed++
-			logger.ErrorContext(ctx, "benchmark failed", "commit", c, "error", err)
-			continue
-		}
-
-		payload, err := marshalNotePayload(c, benchArgs, raw)
-		if err != nil {
-			failed++
-			logger.ErrorContext(ctx, "marshal note failed", "commit", c, "error", err)
-			continue
-		}
-
-		if err := gitNotesAdd(ctx, ref, c, payload); err != nil {
-			failed++
-			logger.ErrorContext(ctx, "git notes add failed", "commit", c, "error", err)
-			continue
-		}
-
-		done++
-		logger.DebugContext(ctx, "noted", "commit", c)
-	}
-
-	elapsed := time.Since(start).Truncate(time.Millisecond)
-	logger.InfoContext(ctx, "backfill complete", "noted", done, "skipped", skipped, "failed", failed, "elapsed", elapsed)
-	if failed > 0 {
-		return errors.New("some commits failed to backfill")
-	}
-	return nil
 }
 
 /* ------------------------------- helpers ---------------------------------- */
@@ -141,7 +127,7 @@ func gitNotesAdd(ctx context.Context, notesRef, commit string, payload []byte) e
 	return err
 }
 
-func runBenchesInWorktree(ctx context.Context, commit string, root *RootFlags) ([]byte, []string, error) {
+func runBenchesInWorktree(ctx context.Context, commit string, c *cli.Command) ([]byte, []string, error) {
 	// create temp worktree
 	tmp := filepath.Join(os.TempDir(), "gb-wt-"+commit[:8]+"-"+fmt.Sprint(time.Now().UnixNano()))
 	if _, err := runCmd(ctx, "", "git", "worktree", "add", "--detach", tmp, commit); err != nil {
@@ -151,7 +137,7 @@ func runBenchesInWorktree(ctx context.Context, commit string, root *RootFlags) (
 		_, _ = runCmd(context.Background(), "", "git", "worktree", "remove", "--force", tmp)
 	}()
 
-	args := benchArgsFor(root)
+	args := benchArgsFor(c)
 
 	// run benchmark in that worktree
 	out, err := runCmd(ctx, tmp, "go", args...)
@@ -166,17 +152,17 @@ func runBenchesInWorktree(ctx context.Context, commit string, root *RootFlags) (
 	return out, args, nil
 }
 
-func benchArgsFor(root *RootFlags) []string {
-	pkgs := root.Pkgs
+func benchArgsFor(c *cli.Command) []string {
+	pkgs := c.String("pkgs")
 	if strings.TrimSpace(pkgs) == "" {
 		pkgs = "./..."
 	}
-	args := []string{"test", pkgs, "-run=^$", "-bench", root.Bench, "-benchmem"}
-	if root.Count > 0 {
-		args = append(args, "-count", fmt.Sprint(root.Count))
+	args := []string{"test", pkgs, "-run=^$", "-bench", c.String("bench"), "-benchmem"}
+	if c.Int("count") > 0 {
+		args = append(args, "-count", fmt.Sprint(c.Int("count")))
 	}
-	if strings.TrimSpace(root.Benchtime) != "" {
-		args = append(args, "-benchtime", root.Benchtime)
+	if strings.TrimSpace(c.String("benchtime")) != "" {
+		args = append(args, "-benchtime", c.String("benchtime"))
 	}
 	return args
 }

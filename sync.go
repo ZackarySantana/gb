@@ -2,34 +2,20 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
+
+	"github.com/urfave/cli/v3"
 )
 
-func init() {
-	cmds = append(cmds, command{
-		name: cmdSync,
-		usages: []string{
-			fmt.Sprintf("%s --remote NAME\tSync benchmark notes with remote (push/fetch)\n", cmdSync),
+func (cmd *cmd) Sync() *cli.Command {
+	return &cli.Command{
+		Name:  "sync",
+		Usage: "Sync benchmark notes with remote (push/fetch)",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "remote", Value: "origin", Usage: "git remote to sync with"},
 		},
-		flags: func(ctx context.Context, params *commandParams) {
-			remote := params.fs.String("remote", "origin", "git remote to sync with")
-			params.flags["remote"] = remote
+		Action: func(ctx context.Context, c *cli.Command) error {
+			cmd.logger.InfoContext(ctx, "[sync] (todo)", "remote", c.String("remote"))
+			return nil
 		},
-		run: func(ctx context.Context, params *commandParams) error {
-			return Sync(ctx, &SyncArgs{Root: params.root, Remote: *params.flags["remote"]}, params.logger)
-		},
-	})
-}
-
-const cmdSync = "sync"
-
-type SyncArgs struct {
-	Root   *RootFlags
-	Remote string
-}
-
-func Sync(ctx context.Context, a *SyncArgs, logger *slog.Logger) error {
-	logger.InfoContext(ctx, "[sync] (todo)", "remote", a.Remote)
-	return nil
+	}
 }
