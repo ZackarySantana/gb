@@ -28,9 +28,9 @@ func (cmd *cmd) Backfill() *cli.Command {
 			since := c.StringArg("since")
 			force := c.Bool("force")
 
-			cmd.logger.DebugContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"..HEAD")
+			cmd.logger.DebugContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"^..HEAD")
 
-			commits, err := gitRevList(ctx, since+"..HEAD")
+			commits, err := gitRevList(ctx, since+"^..HEAD")
 			if err != nil {
 				return fmt.Errorf("git rev-list: %w", err)
 			}
@@ -38,12 +38,12 @@ func (cmd *cmd) Backfill() *cli.Command {
 				cmd.logger.InfoContext(ctx, "no commits to backfill")
 				return nil
 			}
+			benchmarkArgs := benchmarkCommand(c)
+
+			cmd.logger.DebugContext(ctx, "found commits", "benchmark command", strings.Join(benchmarkArgs, " "), "commits", strings.Join(commits, ", "))
 
 			var done, skipped, failed int
 			start := time.Now()
-
-			benchmarkArgs := benchmarkCommand(c)
-			cmd.logger.DebugContext(ctx, "benchmark command", "args", strings.Join(benchmarkArgs, " "))
 			for _, commit := range commits {
 				isSkipped, err := cmd.benchmark(ctx, notesRef, commit, benchmarkArgs, force)
 				if err != nil {
