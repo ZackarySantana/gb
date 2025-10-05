@@ -53,6 +53,29 @@ func gitWorktreeAdd(ctx context.Context, ref string) (string, error) {
 	return tmp, err
 }
 
+type worktreeInfo struct {
+	path   string
+	commit string
+}
+
+func gitWorktreeList(ctx context.Context) ([]worktreeInfo, error) {
+	out, err := runCmd(ctx, "", "git", "worktree", "list")
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	var infos []worktreeInfo
+	for _, l := range lines {
+		parts := strings.Fields(l)
+		if len(parts) < 2 {
+			continue
+		}
+		infos = append(infos, worktreeInfo{path: parts[0], commit: parts[1]})
+	}
+
+	return infos, nil
+}
+
 func gitWorktreeRemove(ctx context.Context, dir string) error {
 	_, err := runCmd(ctx, "", "git", "worktree", "remove", "--force", dir)
 	return err

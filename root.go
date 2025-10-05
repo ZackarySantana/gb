@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -30,7 +31,22 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			return ctx, nil
 		},
 		After: func(ctx context.Context, c *cli.Command) error {
-			// TODO: Clean up worktrees if any fit /tmp/gb-wt-*
+			cmd.logger.DebugContext(ctx, "command complete, cleaning up worktrees")
+			out, err := gitWorktreeList(ctx)
+			if err != nil {
+				cmd.logger.ErrorContext(ctx, "cleaning up leftover worktrees", "error", err)
+				return nil
+			}
+			for _, l := range out {
+				if !strings.HasPrefix(l.path, "/tmp/gb-wt-") {
+					continue
+				}
+				cmd.logger.InfoContext(ctx, "removing leftover worktree", "path", l.path, "commit", l.commit)
+				if err = gitWorktreeRemove(context.WithoutCancel(ctx), l.path); err != nil {
+					cmd.logger.ErrorContext(ctx, "removing leftover worktree", "error", err, "path", l.path)
+				}
+			}
+			cmd.logger.DebugContext(ctx, "worktree cleanup complete")
 			return nil
 		},
 		Commands: []*cli.Command{
