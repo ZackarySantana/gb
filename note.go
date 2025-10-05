@@ -86,15 +86,16 @@ func parseBenchReport(raw []byte) (*BenchReport, error) {
 			s := BenchSample{
 				Iterations: int64(rec.Iters),
 			}
+			// time/op (normalize to ns)
+			if v, ok := valueNsPerOp(rec); ok {
+				s.NsPerOp = v
+			}
 			// bytes/op, allocs/op
 			if v, ok := rec.Value("B/op"); ok {
 				s.BytesPerOp = int64(v)
 			}
 			if v, ok := rec.Value("allocs/op"); ok {
 				s.AllocsPerOp = int64(v)
-			}
-			if v, ok := rec.Value("ns/op"); ok {
-				s.NsPerOp = v
 			}
 			c.Samples = append(c.Samples, s)
 		default:
@@ -123,6 +124,32 @@ func parseBenchReport(raw []byte) (*BenchReport, error) {
 	})
 
 	return rep, nil
+}
+
+// valueNsPerOp returns time/op normalized to nanoseconds, regardless of the
+// unit used in the benchmark output (ns/op, µs/op, ms/op, s/op).
+func valueNsPerOp(rec *benchfmt.Result) (float64, bool) {
+	// Try common time units in descending precision.
+	if v, ok := rec.Value("ns/op"); ok {
+		return v, true
+	}
+	// Some terminals/files use the micro sign U+00B5; others may have ASCII "us/op".
+	if v, ok := rec.Value("µs/op"); ok { // U+00B5
+		return v * 1e3, true // µs -> ns
+	}
+	if v, ok := rec.Value("us/op"); ok { // ASCII fallback
+		return v * 1e3, true
+	}
+	if v, ok := rec.Value("ms/op"); ok {
+		return v * 1e6, true // ms -> ns
+	}
+	if v, ok := rec.Value("s/op"); ok {
+		return v * 1e9, true // s -> ns
+	}
+	if v, ok := rec.Value("sec/op"); ok {
+		return v * 1e9, true // s -> ns
+	}
+	return 0, false
 }
 
 var (
