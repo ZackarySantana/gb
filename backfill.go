@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -41,19 +40,15 @@ type BackfillArgs struct {
 }
 
 func parseBackfill(ctx context.Context, stderr io.Writer, args []string) (*BackfillArgs, error) {
-	fs := flag.NewFlagSet(cmdBackfill, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+	fs, root := setupCommandFlags(ctx, cmdBackfill, stderr)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	ref := fs.Args()
-	if len(ref) < 1 {
-		fmt.Fprintln(stderr, "backfill: missing REF")
-		return nil, flag.ErrHelp
+	ref, err := requireSingleArg(fs, stderr, cmdBackfill, "REF")
+	if err != nil {
+		return nil, err
 	}
-	return &BackfillArgs{Root: root, Since: ref[0]}, nil
+	return &BackfillArgs{Root: root, Since: ref}, nil
 }
 
 // Backfill walks commits since a ref and fills in missing notes.

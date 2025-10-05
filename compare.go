@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -35,10 +34,7 @@ type CompareArgs struct {
 }
 
 func parseCompare(ctx context.Context, stderr io.Writer, args []string) (*CompareArgs, error) {
-	fs := flag.NewFlagSet(cmdCompare, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+	fs, root := setupCommandFlags(ctx, cmdCompare, stderr)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

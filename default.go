@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -33,10 +32,7 @@ type DefaultArgs struct {
 }
 
 func parseDefault(ctx context.Context, stderr io.Writer, args []string) (*DefaultArgs, error) {
-	fs := flag.NewFlagSet("", flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+	fs, root := setupCommandFlags(ctx, "", stderr)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

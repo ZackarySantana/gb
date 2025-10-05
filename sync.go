@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -31,11 +30,8 @@ type SyncArgs struct {
 }
 
 func parseSync(ctx context.Context, stderr io.Writer, args []string) (*SyncArgs, error) {
-	fs := flag.NewFlagSet(cmdSync, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
+	fs, root := setupCommandFlags(ctx, cmdSync, stderr)
 	remote := fs.String("remote", "origin", "git remote to sync with")
-	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -33,19 +32,15 @@ type ShowArgs struct {
 }
 
 func parseShow(ctx context.Context, stderr io.Writer, args []string) (*ShowArgs, error) {
-	fs := flag.NewFlagSet(cmdShow, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+	fs, root := setupCommandFlags(ctx, cmdShow, stderr)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	ref := fs.Args()
-	if len(ref) < 1 {
-		fmt.Fprintln(stderr, "show: missing REF")
-		return nil, flag.ErrHelp
+	ref, err := requireSingleArg(fs, stderr, cmdShow, "REF")
+	if err != nil {
+		return nil, err
 	}
-	return &ShowArgs{Root: root, Ref: ref[0]}, nil
+	return &ShowArgs{Root: root, Ref: ref}, nil
 }
 
 // Show displays a stored note for a given commit/ref.
