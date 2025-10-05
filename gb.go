@@ -29,12 +29,38 @@ var (
 	cmds       = []command{}
 )
 
+type commandParams struct {
+	logger *slog.Logger
+	fs     *flag.FlagSet
+	root   *RootFlags
+	args   []string
+
+	flags map[string]*string
+}
+
 type command struct {
 	name     string
 	aliases  []string
 	usages   []string
 	examples []string
-	run      func(ctx context.Context, logger *slog.Logger, args []string) error
+	flags    func(ctx context.Context, params *commandParams)
+	run      func(ctx context.Context, params *commandParams) error
+}
+
+func (c *command) execute(ctx context.Context, logger *slog.Logger, logLeveler *slog.LevelVar, args []string) error {
+	fs, root := setupFlags(ctx, logger)
+	params := &commandParams{logger: logger, fs: fs, root: root, args: args}
+	if c.flags != nil {
+		c.flags(ctx, params)
+	}
+	if err := fs.Parse(args); err != nil {
+		return fmt.Errorf("%s: parse flags: %w", c.name, err)
+	}
+	if root.Verbose {
+		logLeveler.Set(slog.LevelDebug)
+	}
+
+	return c.run(ctx, &commandParams{logger: logger, fs: fs, root: root, args: fs.Args()})
 }
 
 func init() {
@@ -45,8 +71,8 @@ func init() {
 			usages: []string{
 				"version\tShow version",
 			},
-			run: func(ctx context.Context, logger *slog.Logger, args []string) error {
-				logger.Info("version", "version", version, "go", runtime.Version(), "os", runtime.GOOS, "arch", runtime.GOARCH)
+			run: func(ctx context.Context, params *commandParams) error {
+				params.logger.Info("version", "version", version, "go", runtime.Version(), "os", runtime.GOOS, "arch", runtime.GOARCH)
 				return nil
 			},
 		},
@@ -56,8 +82,8 @@ func init() {
 			usages: []string{
 				"help\tShow help",
 			},
-			run: func(ctx context.Context, logger *slog.Logger, args []string) error {
-				Usage(ctx, logger)
+			run: func(ctx context.Context, params *commandParams) error {
+				Usage(ctx, params.logger)
 				return nil
 			},
 		},
@@ -176,7 +202,7 @@ func run(ctx context.Context, argv []string, logger *slog.Logger, logLeveler *sl
 	ctx = context.WithValue(ctx, cmdName, prog)
 
 	if len(argv) == 1 {
-		return defaultCMD.run(ctx, logger, argv[1:])
+		return defaultCMD.execute(ctx, logger, logLeveler, argv[1:])
 	}
 
 	targetCMD := argv[1]
@@ -185,13 +211,13 @@ func run(ctx context.Context, argv []string, logger *slog.Logger, logLeveler *sl
 		if targetCMD != cmd.name && !slices.Contains(cmd.aliases, targetCMD) {
 			continue
 		}
-		if err := cmd.run(ctx, logger, argv[2:]); err != nil {
+		if err := cmd.execute(ctx, logger, logLeveler, argv[2:]); err != nil {
 			return fmt.Errorf("%s: %w", cmd.name, err)
 		}
 		return nil
 	}
 
-	return defaultCMD.run(ctx, logger, argv[1:])
+	return defaultCMD.execute(ctx, logger, logLeveler, argv[1:])
 }
 
 func programName(argv []string) string {

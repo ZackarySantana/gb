@@ -15,12 +15,12 @@ func init() {
 			"\tCompare working tree vs HEAD",
 			"-bench '^BenchmarkFoo$'\tBenchmark one test",
 		},
-		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
-			a, err := parseDefault(ctx, logger, args)
+		run: func(ctx context.Context, params *commandParams) error {
+			a, err := parseDefault(ctx, params)
 			if err != nil {
 				return err
 			}
-			return Default(ctx, a, logger)
+			return Default(ctx, a, params.logger)
 		},
 	}
 	cmds = append([]command{defaultCMD}, cmds...) // Default command is first
@@ -30,12 +30,8 @@ type DefaultArgs struct {
 	Root *RootFlags
 }
 
-func parseDefault(ctx context.Context, logger *slog.Logger, args []string) (*DefaultArgs, error) {
-	fs, root := setupFlags(ctx, logger)
-	if err := fs.Parse(args); err != nil {
-		return nil, err
-	}
-	return &DefaultArgs{Root: root}, nil
+func parseDefault(_ context.Context, params *commandParams) (*DefaultArgs, error) {
+	return &DefaultArgs{Root: params.root}, nil
 }
 
 func Default(ctx context.Context, a *DefaultArgs, logger *slog.Logger) error {

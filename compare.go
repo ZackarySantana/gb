@@ -15,12 +15,12 @@ func init() {
 		examples: []string{
 			fmt.Sprintf("%s origin/main HEAD\tCompare two commits", cmdCompare),
 		},
-		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
-			a, err := parseCompare(ctx, logger, args)
+		run: func(ctx context.Context, params *commandParams) error {
+			a, err := parseCompare(ctx, params)
 			if err != nil {
 				return err
 			}
-			return Compare(ctx, a, logger)
+			return Compare(ctx, a, params.logger)
 		},
 	})
 }
@@ -33,16 +33,15 @@ type CompareArgs struct {
 	Head string
 }
 
-func parseCompare(ctx context.Context, logger *slog.Logger, args []string) (*CompareArgs, error) {
-	fs, root := setupFlags(ctx, logger)
-	if err := fs.Parse(args); err != nil {
+func parseCompare(ctx context.Context, params *commandParams) (*CompareArgs, error) {
+	if err := params.fs.Parse(params.args); err != nil {
 		return nil, err
 	}
 	base, head := "origin/main", "HEAD"
-	if filled := optionalArgs(fs.Args(), &base, &head); !filled {
-		logger.DebugContext(ctx, "using some defaults", "base", base, "head", head)
+	if filled := optionalArgs(params.fs.Args(), &base, &head); !filled {
+		params.logger.DebugContext(ctx, "using some defaults", "base", base, "head", head)
 	}
-	return &CompareArgs{Root: root, Base: base, Head: head}, nil
+	return &CompareArgs{Root: params.root, Base: base, Head: head}, nil
 }
 
 func Compare(ctx context.Context, a *CompareArgs, logger *slog.Logger) error {

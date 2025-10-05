@@ -23,12 +23,12 @@ func init() {
 		examples: []string{
 			fmt.Sprintf("%s origin/main\tBackfill history", cmdBackfill),
 		},
-		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
-			a, err := parseBackfill(ctx, logger, args)
+		run: func(ctx context.Context, params *commandParams) error {
+			a, err := parseBackfill(ctx, params)
 			if err != nil {
 				return err
 			}
-			return Backfill(ctx, a, logger)
+			return Backfill(ctx, a, params.logger)
 		},
 	})
 }
@@ -40,16 +40,12 @@ type BackfillArgs struct {
 	Since string
 }
 
-func parseBackfill(ctx context.Context, logger *slog.Logger, args []string) (*BackfillArgs, error) {
-	fs, root := setupFlags(ctx, logger)
-	if err := fs.Parse(args); err != nil {
-		return nil, err
-	}
+func parseBackfill(_ context.Context, params *commandParams) (*BackfillArgs, error) {
 	var ref string
-	if err := requireArgs(fs.Args(), &ref); err != nil {
+	if err := requireArgs(params.fs.Args(), &ref); err != nil {
 		return nil, err
 	}
-	return &BackfillArgs{Root: root, Since: ref}, nil
+	return &BackfillArgs{Root: params.root, Since: ref}, nil
 }
 
 // Backfill walks commits since a ref and fills in missing notes.

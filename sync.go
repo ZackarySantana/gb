@@ -12,12 +12,16 @@ func init() {
 		usages: []string{
 			fmt.Sprintf("%s --remote NAME\tSync benchmark notes with remote (push/fetch)\n", cmdSync),
 		},
-		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
-			a, err := parseSync(ctx, logger, args)
+		flags: func(ctx context.Context, params *commandParams) {
+			remote := params.fs.String("remote", "origin", "git remote to sync with")
+			params.flags["remote"] = remote
+		},
+		run: func(ctx context.Context, params *commandParams) error {
+			a, err := parseSync(ctx, params)
 			if err != nil {
 				return err
 			}
-			return Sync(ctx, a, logger)
+			return Sync(ctx, a, params.logger)
 		},
 	})
 }
@@ -29,13 +33,8 @@ type SyncArgs struct {
 	Remote string
 }
 
-func parseSync(ctx context.Context, logger *slog.Logger, args []string) (*SyncArgs, error) {
-	fs, root := setupFlags(ctx, logger)
-	remote := fs.String("remote", "origin", "git remote to sync with")
-	if err := fs.Parse(args); err != nil {
-		return nil, err
-	}
-	return &SyncArgs{Root: root, Remote: *remote}, nil
+func parseSync(_ context.Context, params *commandParams) (*SyncArgs, error) {
+	return &SyncArgs{Root: params.root, Remote: *params.flags["remote"]}, nil
 }
 
 func Sync(ctx context.Context, a *SyncArgs, logger *slog.Logger) error {
