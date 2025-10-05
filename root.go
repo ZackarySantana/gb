@@ -29,6 +29,10 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			}
 			return ctx, nil
 		},
+		After: func(ctx context.Context, c *cli.Command) error {
+			// TODO: Clean up worktrees if any fit /tmp/gb-wt-*
+			return nil
+		},
 		Commands: []*cli.Command{
 			cmd.Backfill(),
 			cmd.Compare(),

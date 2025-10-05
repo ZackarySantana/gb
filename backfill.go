@@ -192,19 +192,6 @@ func marshalNotePayload(commit string, benchArgs []string, raw []byte) ([]byte, 
 	return json.Marshal(doc)
 }
 
-func runCmd(ctx context.Context, dir string, bin string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, bin, args...)
-	if dir != "" {
-		cmd.Dir = dir
-	}
-	cmd.Env = os.Environ()
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return out, fmt.Errorf("%s %s: %w", bin, strings.Join(args, " "), err)
-	}
-	return out, nil
-}
-
 func short(sha string) string {
 	if len(sha) > 8 {
 		return sha[:8]

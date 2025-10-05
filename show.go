@@ -3,10 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"os/exec"
-	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -26,7 +23,7 @@ func (cmd *cmd) Show() *cli.Command {
 
 			sha, err := resolveCommit(ctx, ref)
 			if err != nil {
-				return fmt.Errorf("resolve %q: %w", ref, err)
+				return fmt.Errorf("resolving commit %s: %w", ref, err)
 			}
 
 			cmd.logger.DebugContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
@@ -38,7 +35,6 @@ func (cmd *cmd) Show() *cli.Command {
 
 			var js map[string]any
 			if err := json.Unmarshal(raw, &js); err != nil {
-				cmd.logger.ErrorContext(ctx, "unmarshal notes", "error", err, "commit", sha, "notes_ref", notesRef)
 				return fmt.Errorf("reading note for commit %s: %w", sha, err)
 			}
 			// TODO: use a table format for non-JSON output?
@@ -46,29 +42,4 @@ func (cmd *cmd) Show() *cli.Command {
 			return nil
 		},
 	}
-}
-
-/* ------------------------------- helpers ---------------------------------- */
-
-var errNoteMissing = errors.New("note missing")
-
-func resolveCommit(ctx context.Context, ref string) (string, error) {
-	out, err := runCmd(ctx, "", "git", "rev-parse", ref)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-func gitNotesShow(ctx context.Context, notesRef, commit string) ([]byte, error) {
-	out, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "show", commit)
-	if err != nil {
-		// Missing note returns a non-zero exit; map to a friendlier error.
-		var ee *exec.ExitError
-		if errors.As(err, &ee) {
-			return nil, errNoteMissing
-		}
-		return nil, err
-	}
-	return out, nil
 }
