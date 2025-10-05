@@ -33,12 +33,23 @@ func (cmd *cmd) Show() *cli.Command {
 				return fmt.Errorf("reading note for commit %s: %w", sha, err)
 			}
 
-			var js map[string]any
-			if err := json.Unmarshal(raw, &js); err != nil {
+			var note Note
+			if err := json.Unmarshal(raw, &note); err != nil {
 				return fmt.Errorf("reading note for commit %s: %w", sha, err)
 			}
 			// TODO: use a table format for non-JSON output?
 			cmd.logger.InfoContext(ctx, "result", "commit", sha, "notes_ref", notesRef)
+			for _, bench := range note.Parsed.Benches {
+				stats := bench.Stats
+				cmd.logger.InfoContext(ctx, "bench result",
+					"benchmark", bench.Name,
+					"ns_per_op_mean", stats.NsPerOpMean,
+					"ns_per_op_median", stats.NsPerOpMedian,
+					"bytes_per_op_mean", stats.BytesPerOpMean,
+					"allocs_per_op_mean", stats.AllocsPerOpMean,
+					"samples", stats.Count,
+				)
+			}
 			return nil
 		},
 	}
