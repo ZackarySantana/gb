@@ -42,12 +42,12 @@ func parseShow(ctx context.Context, stderr io.Writer, args []string) (*ShowArgs,
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	pos := fs.Args()
-	if len(pos) < 1 {
+	ref := fs.Args()
+	if len(ref) < 1 {
 		fmt.Fprintln(stderr, "show: missing REF")
 		return nil, flag.ErrHelp
 	}
-	return &ShowArgs{Root: root, Ref: pos[0]}, nil
+	return &ShowArgs{Root: root, Ref: ref[0]}, nil
 }
 
 // Show displays a stored note for a given commit/ref.

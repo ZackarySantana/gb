@@ -19,10 +19,10 @@ func init() {
 	cmds = append(cmds, command{
 		name: cmdBackfill,
 		usages: []string{
-			fmt.Sprintf("%s --since REF\tBackfill missing notes in REF..HEAD", cmdBackfill),
+			fmt.Sprintf("%s REF\tBackfill missing notes in REF..HEAD", cmdBackfill),
 		},
 		examples: []string{
-			fmt.Sprintf("%s --since origin/main\tBackfill history", cmdBackfill),
+			fmt.Sprintf("%s origin/main\tBackfill history", cmdBackfill),
 		},
 		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
 			a, err := parseBackfill(ctx, stderr, args)
@@ -45,16 +45,16 @@ func parseBackfill(ctx context.Context, stderr io.Writer, args []string) (*Backf
 	fs := flag.NewFlagSet(cmdBackfill, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := ParseRootFlags(fs)
-	since := fs.String("since", "", "start ref (required)")
 	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(*since) == "" {
-		fmt.Fprintln(stderr, "--since REF is required")
+	ref := fs.Args()
+	if len(ref) < 1 {
+		fmt.Fprintln(stderr, "backfill: missing REF")
 		return nil, flag.ErrHelp
 	}
-	return &BackfillArgs{Root: root, Since: *since}, nil
+	return &BackfillArgs{Root: root, Since: ref[0]}, nil
 }
 
 // Backfill walks commits since a ref and fills in missing notes.
