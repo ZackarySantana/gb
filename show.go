@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"io"
+	"log/slog"
 	"os/exec"
 	"strings"
 )
@@ -17,12 +16,12 @@ func init() {
 		usages: []string{
 			fmt.Sprintf("%s REF\tShow stored note for a commit/ref", cmdShow),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-			a, err := parseShow(ctx, stderr, args)
+		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+			a, err := parseShow(ctx, logger, args)
 			if err != nil {
 				return err
 			}
-			return Show(ctx, a, stdout, stderr)
+			return Show(ctx, a, logger)
 		},
 	})
 }
@@ -34,25 +33,21 @@ type ShowArgs struct {
 	Ref  string
 }
 
-func parseShow(ctx context.Context, stderr io.Writer, args []string) (*ShowArgs, error) {
-	fs := flag.NewFlagSet(cmdShow, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+func parseShow(ctx context.Context, logger *slog.Logger, args []string) (*ShowArgs, error) {
+	fs, root := setupFlags(ctx, logger)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	ref := fs.Args()
-	if len(ref) < 1 {
-		fmt.Fprintln(stderr, "show: missing REF")
-		return nil, flag.ErrHelp
+	var ref string
+	if err := requireArgs(fs.Args(), &ref); err != nil {
+		return nil, err
 	}
-	return &ShowArgs{Root: root, Ref: ref[0]}, nil
+	return &ShowArgs{Root: root, Ref: ref}, nil
 }
 
 // Show displays a stored note for a given commit/ref.
 // It prints the exact JSON payload that Backfill stored (pretty-formatted).
-func Show(ctx context.Context, a *ShowArgs, stdout, stderr io.Writer) error {
+func Show(ctx context.Context, a *ShowArgs, logger *slog.Logger) error {
 	notesRef := a.Root.NotesRef
 
 	sha, err := resolveCommit(ctx, a.Ref)
@@ -60,15 +55,12 @@ func Show(ctx context.Context, a *ShowArgs, stdout, stderr io.Writer) error {
 		return fmt.Errorf("resolve %q: %w", a.Ref, err)
 	}
 
-	if a.Root.Verbose {
-		fmt.Fprintf(stderr, "notes ref : %s\n", notesRef)
-		fmt.Fprintf(stderr, "commit    : %s\n", sha)
-	}
+	logger.DebugContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
 
 	raw, err := gitNotesShow(ctx, notesRef, sha)
 	if err != nil {
 		if errors.Is(err, errNoteMissing) {
-			fmt.Fprintf(stderr, "no note found for %s in %s\n", sha, notesRef)
+			logger.ErrorContext(ctx, "note missing", "commit", sha, "notes_ref", notesRef)
 			return nil
 		}
 		return err
@@ -78,11 +70,11 @@ func Show(ctx context.Context, a *ShowArgs, stdout, stderr io.Writer) error {
 	var js any
 	if err := json.Unmarshal(raw, &js); err != nil {
 		// If the payload isn't valid JSON for some reason, just print as-is.
-		fmt.Fprintln(stdout, string(raw))
+		logger.InfoContext(ctx, "raw notes", "commit", sha, "notes_ref", notesRef, "raw", string(raw))
 		return nil
 	}
 	b, _ := json.MarshalIndent(js, "", "  ")
-	fmt.Fprintln(stdout, string(b))
+	logger.InfoContext(ctx, "formatted notes", "commit", sha, "notes_ref", notesRef, "formatted", string(b))
 	return nil
 }
 

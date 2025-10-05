@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,12 +23,12 @@ func init() {
 		examples: []string{
 			fmt.Sprintf("%s origin/main\tBackfill history", cmdBackfill),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-			a, err := parseBackfill(ctx, stderr, args)
+		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+			a, err := parseBackfill(ctx, logger, args)
 			if err != nil {
 				return err
 			}
-			return Backfill(ctx, a, stdout, stderr)
+			return Backfill(ctx, a, logger)
 		},
 	})
 }
@@ -41,37 +40,30 @@ type BackfillArgs struct {
 	Since string
 }
 
-func parseBackfill(ctx context.Context, stderr io.Writer, args []string) (*BackfillArgs, error) {
-	fs := flag.NewFlagSet(cmdBackfill, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+func parseBackfill(ctx context.Context, logger *slog.Logger, args []string) (*BackfillArgs, error) {
+	fs, root := setupFlags(ctx, logger)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	ref := fs.Args()
-	if len(ref) < 1 {
-		fmt.Fprintln(stderr, "backfill: missing REF")
-		return nil, flag.ErrHelp
+	var ref string
+	if err := requireArgs(fs.Args(), &ref); err != nil {
+		return nil, err
 	}
-	return &BackfillArgs{Root: root, Since: ref[0]}, nil
+	return &BackfillArgs{Root: root, Since: ref}, nil
 }
 
 // Backfill walks commits since a ref and fills in missing notes.
-func Backfill(ctx context.Context, a *BackfillArgs, stdout, stderr io.Writer) error {
+func Backfill(ctx context.Context, a *BackfillArgs, logger *slog.Logger) error {
 	ref := a.Root.NotesRef
 
-	if a.Root.Verbose {
-		fmt.Fprintf(stderr, "notes ref: %s\n", ref)
-		fmt.Fprintf(stderr, "range    : %s..HEAD\n", a.Since)
-	}
+	logger.DebugContext(ctx, "backfill start", "notes_ref", ref, "range", a.Since+"..HEAD")
 
 	commits, err := gitRevList(ctx, a.Since+"..HEAD")
 	if err != nil {
 		return fmt.Errorf("git rev-list: %w", err)
 	}
 	if len(commits) == 0 {
-		fmt.Fprintln(stdout, "no commits to backfill")
+		logger.InfoContext(ctx, "no commits to backfill")
 		return nil
 	}
 
@@ -88,49 +80,43 @@ func Backfill(ctx context.Context, a *BackfillArgs, stdout, stderr io.Writer) er
 		has, err := gitNoteExists(ctx, ref, c)
 		if err != nil {
 			failed++
-			fmt.Fprintf(stderr, "✖ %s: check note failed: %v\n", short(c), err)
+			logger.ErrorContext(ctx, "git note exists failed", "commit", c, "error", err)
 			continue
 		}
 		if has {
 			skipped++
-			if a.Root.Verbose {
-				fmt.Fprintf(stderr, "• %s: note exists, skipping\n", short(c))
-			}
+			logger.DebugContext(ctx, "note exists, skipping", "commit", c)
 			continue
 		}
 
-		if a.Root.Verbose {
-			fmt.Fprintf(stderr, "→ %s: benchmarking…\n", short(c))
-		}
+		logger.DebugContext(ctx, "benchmarking", "commit", c)
 
 		raw, benchArgs, err := runBenchesInWorktree(ctx, c, a.Root)
 		if err != nil {
 			failed++
-			fmt.Fprintf(stderr, "✖ %s: bench failed: %v\n", short(c), err)
+			logger.ErrorContext(ctx, "benchmark failed", "commit", c, "error", err)
 			continue
 		}
 
 		payload, err := marshalNotePayload(c, benchArgs, raw)
 		if err != nil {
 			failed++
-			fmt.Fprintf(stderr, "✖ %s: marshal note: %v\n", short(c), err)
+			logger.ErrorContext(ctx, "marshal note failed", "commit", c, "error", err)
 			continue
 		}
 
 		if err := gitNotesAdd(ctx, ref, c, payload); err != nil {
 			failed++
-			fmt.Fprintf(stderr, "✖ %s: write note: %v\n", short(c), err)
+			logger.ErrorContext(ctx, "git notes add failed", "commit", c, "error", err)
 			continue
 		}
 
 		done++
-		if a.Root.Verbose {
-			fmt.Fprintf(stderr, "✓ %s: noted\n", short(c))
-		}
+		logger.DebugContext(ctx, "noted", "commit", c)
 	}
 
 	elapsed := time.Since(start).Truncate(time.Millisecond)
-	fmt.Fprintf(stdout, "backfill complete: %d noted, %d skipped, %d failed in %s\n", done, skipped, failed, elapsed)
+	logger.InfoContext(ctx, "backfill complete", "noted", done, "skipped", skipped, "failed", failed, "elapsed", elapsed)
 	if failed > 0 {
 		return errors.New("some commits failed to backfill")
 	}

@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
-	"io"
+	"log/slog"
 )
 
 func init() {
@@ -17,12 +15,12 @@ func init() {
 			"\tCompare working tree vs HEAD",
 			"-bench '^BenchmarkFoo$'\tBenchmark one test",
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-			a, err := parseDefault(ctx, stderr, args)
+		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+			a, err := parseDefault(ctx, logger, args)
 			if err != nil {
 				return err
 			}
-			return Default(ctx, a, stdout, stderr)
+			return Default(ctx, a, logger)
 		},
 	}
 	cmds = append([]command{defaultCMD}, cmds...) // Default command is first
@@ -32,19 +30,16 @@ type DefaultArgs struct {
 	Root *RootFlags
 }
 
-func parseDefault(ctx context.Context, stderr io.Writer, args []string) (*DefaultArgs, error) {
-	fs := flag.NewFlagSet("", flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+func parseDefault(ctx context.Context, logger *slog.Logger, args []string) (*DefaultArgs, error) {
+	fs, root := setupFlags(ctx, logger)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
 	return &DefaultArgs{Root: root}, nil
 }
 
-func Default(ctx context.Context, a *DefaultArgs, stdout, stderr io.Writer) error {
-	fmt.Fprintln(stdout, "[default] run benches on working tree; compare vs HEAD (todo)")
+func Default(ctx context.Context, a *DefaultArgs, logger *slog.Logger) error {
+	logger.InfoContext(ctx, "[default] run benches on working tree; compare vs HEAD (todo)")
 	// TODO: This should just call Compare?
 	return nil
 }

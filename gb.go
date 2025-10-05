@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io"
+	"log/slog"
 	"os"
 	"runtime"
 	"slices"
@@ -12,7 +12,10 @@ import (
 )
 
 func main() {
-	if err := Run(context.Background(), os.Args, os.Stdout, os.Stderr); err != nil {
+	logLevel := &slog.LevelVar{}
+	logger := newSplitLogger(os.Stdout, os.Stderr, logLevel)
+
+	if err := Run(context.Background(), os.Args, logger, logLevel); err != nil {
 		os.Exit(1)
 	}
 }
@@ -31,7 +34,7 @@ type command struct {
 	aliases  []string
 	usages   []string
 	examples []string
-	run      func(ctx context.Context, stdout, stderr io.Writer, args []string) error
+	run      func(ctx context.Context, logger *slog.Logger, args []string) error
 }
 
 func init() {
@@ -42,8 +45,8 @@ func init() {
 			usages: []string{
 				"version\tShow version",
 			},
-			run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-				fmt.Fprintln(stdout, version)
+			run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+				logger.Info("version", "version", version, "go", runtime.Version(), "os", runtime.GOOS, "arch", runtime.GOARCH)
 				return nil
 			},
 		},
@@ -53,8 +56,8 @@ func init() {
 			usages: []string{
 				"help\tShow help",
 			},
-			run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-				Usage(ctx, stdout)
+			run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+				Usage(ctx, logger)
 				return nil
 			},
 		},
@@ -71,8 +74,11 @@ type RootFlags struct {
 	Force     bool
 }
 
-// ParseRootFlags wires common flags into fs and returns the struct pointer.
-func ParseRootFlags(fs *flag.FlagSet) *RootFlags {
+func setupFlags(ctx context.Context, logger *slog.Logger) (*flag.FlagSet, *RootFlags) {
+	ctx = context.WithValue(ctx, rawHandler, true)
+	fs := flag.NewFlagSet(cmdSync, flag.ContinueOnError)
+	fs.SetOutput(NewLoggerWriter(ctx, logger.ErrorContext))
+	fs.Usage = func() { Usage(ctx, logger) }
 	gv := runtime.Version()
 	notesRef := fmt.Sprintf("refs/notes/benches/%s-%s-%s", runtime.GOOS, runtime.GOARCH, gv)
 	cfg := &RootFlags{}
@@ -83,15 +89,46 @@ func ParseRootFlags(fs *flag.FlagSet) *RootFlags {
 	fs.StringVar(&cfg.Pkgs, "pkgs", "./...", "comma-separated package list")
 	fs.StringVar(&cfg.NotesRef, "notes-ref", notesRef, "override notes ref (default derived from env)")
 	fs.BoolVar(&cfg.Force, "force", false, "allow cross-env comparisons")
-	return cfg
+	return fs, cfg
 }
 
-func Usage(ctx context.Context, stderr io.Writer) {
+// requireArgs accepts pointers to n strings and fills them with the
+// positional arguments. It returns an error if the number of positional
+// arguments does not match n.
+func requireArgs(pos []string, args ...*string) error {
+	if len(pos) != len(args) {
+		names := make([]string, len(args))
+		for i := range args {
+			names[i] = fmt.Sprintf("ARG%d", i+1)
+		}
+		return fmt.Errorf("expected %d args (%s), got %d", len(args), names, len(pos))
+	}
+	for i := range args {
+		*args[i] = pos[i]
+	}
+	return nil
+}
+
+// optionalArgs accepts pointers to n strings and fills them with the
+// positional arguments. It returns true if all n arguments were provided,
+// false if fewer were provided (in which case the remaining args are not set).
+func optionalArgs(pos []string, args ...*string) bool {
+	for i := range args {
+		if i >= len(pos) {
+			return false
+		}
+		*args[i] = pos[i]
+	}
+	return true
+}
+
+func Usage(ctx context.Context, logger *slog.Logger) {
+	ctx = context.WithValue(ctx, rawHandler, true)
 	name, ok := ctx.Value(cmdName).(string)
 	if !ok || version == "dev" {
 		name = fmt.Sprintf("%s_dev", tool)
 	}
-	w := tabwriter.NewWriter(stderr, 0, 8, 2, ' ', 0)
+	w := tabwriter.NewWriter(NewLoggerWriter(ctx, logger.ErrorContext), 0, 8, 2, ' ', 0)
 	fmt.Fprintf(w, "Usage:\n")
 	for _, cmd := range cmds {
 		for _, u := range cmd.usages {
@@ -117,20 +154,29 @@ func Usage(ctx context.Context, stderr io.Writer) {
 	_ = w.Flush()
 }
 
-type cmdValues struct{}
+type contextValues struct{}
 
 var (
-	cmdName = cmdValues{}
+	cmdName    = contextValues{}
+	rawHandler = contextValues{}
 )
 
 // Run dispatches based on argv[1]. It then parses the rest of the arguments
 // and calls the appropriate command function.
-func Run(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
+func Run(ctx context.Context, argv []string, logger *slog.Logger, logLeveler *slog.LevelVar) error {
+	err := run(ctx, argv, logger, logLeveler)
+	if err != nil {
+		logger.ErrorContext(ctx, err.Error())
+	}
+	return err
+}
+
+func run(ctx context.Context, argv []string, logger *slog.Logger, logLeveler *slog.LevelVar) error {
 	prog := programName(argv)
 	ctx = context.WithValue(ctx, cmdName, prog)
 
 	if len(argv) == 1 {
-		return defaultCMD.run(ctx, stdout, stderr, argv[1:])
+		return defaultCMD.run(ctx, logger, argv[1:])
 	}
 
 	targetCMD := argv[1]
@@ -139,10 +185,13 @@ func Run(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
 		if targetCMD != cmd.name && !slices.Contains(cmd.aliases, targetCMD) {
 			continue
 		}
-		return cmd.run(ctx, stdout, stderr, argv[2:])
+		if err := cmd.run(ctx, logger, argv[2:]); err != nil {
+			return fmt.Errorf("%s: %w", cmd.name, err)
+		}
+		return nil
 	}
 
-	return defaultCMD.run(ctx, stdout, stderr, argv[1:])
+	return defaultCMD.run(ctx, logger, argv[1:])
 }
 
 func programName(argv []string) string {

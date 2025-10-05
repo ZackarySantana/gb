@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"io"
+	"log/slog"
 )
 
 func init() {
@@ -16,12 +15,12 @@ func init() {
 		examples: []string{
 			fmt.Sprintf("%s origin/main HEAD\tCompare two commits", cmdCompare),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-			a, err := parseCompare(ctx, stderr, args)
+		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+			a, err := parseCompare(ctx, logger, args)
 			if err != nil {
 				return err
 			}
-			return Compare(ctx, a, stdout, stderr)
+			return Compare(ctx, a, logger)
 		},
 	})
 }
@@ -34,26 +33,19 @@ type CompareArgs struct {
 	Head string
 }
 
-func parseCompare(ctx context.Context, stderr io.Writer, args []string) (*CompareArgs, error) {
-	fs := flag.NewFlagSet(cmdCompare, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(ctx, stderr) }
+func parseCompare(ctx context.Context, logger *slog.Logger, args []string) (*CompareArgs, error) {
+	fs, root := setupFlags(ctx, logger)
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	pos := fs.Args()
 	base, head := "origin/main", "HEAD"
-	if len(pos) >= 1 {
-		base = pos[0]
-	}
-	if len(pos) >= 2 {
-		head = pos[1]
+	if filled := optionalArgs(fs.Args(), &base, &head); !filled {
+		logger.DebugContext(ctx, "using some defaults", "base", base, "head", head)
 	}
 	return &CompareArgs{Root: root, Base: base, Head: head}, nil
 }
 
-func Compare(ctx context.Context, a *CompareArgs, stdout, stderr io.Writer) error {
-	fmt.Fprintf(stdout, "[compare] base=%s head=%s (todo)\n", a.Base, a.Head)
+func Compare(ctx context.Context, a *CompareArgs, logger *slog.Logger) error {
+	logger.InfoContext(ctx, "[compare] base=%s head=%s (todo)", a.Base, a.Head)
 	return nil
 }

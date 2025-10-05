@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"io"
+	"log/slog"
 )
 
 func init() {
@@ -13,12 +12,12 @@ func init() {
 		usages: []string{
 			fmt.Sprintf("%s --remote NAME\tSync benchmark notes with remote (push/fetch)\n", cmdSync),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
-			a, err := parseSync(ctx, stderr, args)
+		run: func(ctx context.Context, logger *slog.Logger, args []string) error {
+			a, err := parseSync(ctx, logger, args)
 			if err != nil {
 				return err
 			}
-			return Sync(ctx, a, stdout, stderr)
+			return Sync(ctx, a, logger)
 		},
 	})
 }
@@ -30,19 +29,16 @@ type SyncArgs struct {
 	Remote string
 }
 
-func parseSync(ctx context.Context, stderr io.Writer, args []string) (*SyncArgs, error) {
-	fs := flag.NewFlagSet(cmdSync, flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	root := ParseRootFlags(fs)
+func parseSync(ctx context.Context, logger *slog.Logger, args []string) (*SyncArgs, error) {
+	fs, root := setupFlags(ctx, logger)
 	remote := fs.String("remote", "origin", "git remote to sync with")
-	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
 	return &SyncArgs{Root: root, Remote: *remote}, nil
 }
 
-func Sync(ctx context.Context, a *SyncArgs, stdout, stderr io.Writer) error {
-	fmt.Fprintf(stdout, "[sync] remote=%s (todo)\n", a.Remote)
+func Sync(ctx context.Context, a *SyncArgs, logger *slog.Logger) error {
+	logger.InfoContext(ctx, "[sync] (todo)", "remote", a.Remote)
 	return nil
 }
