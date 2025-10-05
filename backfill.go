@@ -2,11 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"runtime"
 	"strings"
 	"time"
 
@@ -114,24 +111,4 @@ func benchmarkCommand(c *cli.Command) []string {
 		args = append(args, "-benchtime", c.String("benchtime"))
 	}
 	return args
-}
-
-func marshalNotePayload(commit string, benchArgs []string, raw []byte) ([]byte, error) {
-	host, _ := os.Hostname()
-	doc := map[string]any{
-		"schema":     1,
-		"commit":     commit,
-		"created_at": time.Now().UTC().Format(time.RFC3339),
-		"env": map[string]any{
-			"go_version": runtime.Version(),
-			"goos":       runtime.GOOS,
-			"goarch":     runtime.GOARCH,
-			"gomaxprocs": runtime.GOMAXPROCS(0),
-			"host":       host,
-			"cpus":       runtime.NumCPU(),
-		},
-		"bench_args": benchArgs,
-		"raw":        string(raw),
-	}
-	return json.Marshal(doc)
 }
