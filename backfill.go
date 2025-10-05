@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -139,34 +138,6 @@ func Backfill(ctx context.Context, a *BackfillArgs, stdout, stderr io.Writer) er
 
 /* ------------------------------- helpers ---------------------------------- */
 
-func gitRevList(ctx context.Context, rangeSpec string) ([]string, error) {
-	out, err := runCmd(ctx, "", "git", "rev-list", "--reverse", rangeSpec)
-	if err != nil {
-		return nil, err
-	}
-	lines := strings.Fields(string(out))
-	return lines, nil
-}
-
-func gitNoteExists(ctx context.Context, notesRef, commit string) (bool, error) {
-	_, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "show", commit)
-	if err == nil {
-		return true, nil
-	}
-	// exit code != 0 when note missing; differentiate from other errors
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
-		return false, nil
-	}
-	return false, err
-}
-
-func gitNotesAdd(ctx context.Context, notesRef, commit string, payload []byte) error {
-	// We use -f to overwrite if a concurrent run added one; normally it won't exist.
-	_, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "add", "-f", "-m", string(payload), commit)
-	return err
-}
-
 func runBenchesInWorktree(ctx context.Context, commit string, root *RootFlags) ([]byte, []string, error) {
 	// create temp worktree
 	tmp := filepath.Join(os.TempDir(), "gb-wt-"+commit[:8]+"-"+fmt.Sprint(time.Now().UnixNano()))
@@ -227,22 +198,4 @@ func marshalNotePayload(commit string, benchArgs []string, raw []byte) ([]byte, 
 	return json.Marshal(doc)
 }
 
-func runCmd(ctx context.Context, dir string, bin string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, bin, args...)
-	if dir != "" {
-		cmd.Dir = dir
-	}
-	cmd.Env = os.Environ()
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return out, fmt.Errorf("%s %s: %w", bin, strings.Join(args, " "), err)
-	}
-	return out, nil
-}
 
-func short(sha string) string {
-	if len(sha) > 8 {
-		return sha[:8]
-	}
-	return sha
-}

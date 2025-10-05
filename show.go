@@ -7,8 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os/exec"
-	"strings"
 )
 
 func init() {
@@ -86,27 +84,4 @@ func Show(ctx context.Context, a *ShowArgs, stdout, stderr io.Writer) error {
 	return nil
 }
 
-/* ------------------------------- helpers ---------------------------------- */
 
-var errNoteMissing = errors.New("note missing")
-
-func resolveCommit(ctx context.Context, ref string) (string, error) {
-	out, err := runCmd(ctx, "", "git", "rev-parse", ref)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-func gitNotesShow(ctx context.Context, notesRef, commit string) ([]byte, error) {
-	out, err := runCmd(ctx, "", "git", "notes", "--ref", notesRef, "show", commit)
-	if err != nil {
-		// Missing note returns a non-zero exit; map to a friendlier error.
-		var ee *exec.ExitError
-		if errors.As(err, &ee) {
-			return nil, errNoteMissing
-		}
-		return nil, err
-	}
-	return out, nil
-}
