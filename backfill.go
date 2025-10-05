@@ -60,9 +60,6 @@ func parseBackfill(ctx context.Context, stderr io.Writer, args []string) (*Backf
 // Backfill walks commits since a ref and fills in missing notes.
 func Backfill(ctx context.Context, a *BackfillArgs, stdout, stderr io.Writer) error {
 	ref := a.Root.NotesRef
-	if strings.TrimSpace(ref) == "" {
-		ref = deriveNotesRef()
-	}
 
 	if a.Root.Verbose {
 		fmt.Fprintf(stderr, "notes ref: %s\n", ref)
@@ -141,12 +138,6 @@ func Backfill(ctx context.Context, a *BackfillArgs, stdout, stderr io.Writer) er
 }
 
 /* ------------------------------- helpers ---------------------------------- */
-
-func deriveNotesRef() string {
-	gv := runtime.Version()
-	return fmt.Sprintf("refs/notes/benches/%s-%s-%s",
-		runtime.GOOS, runtime.GOARCH, gv)
-}
 
 func gitRevList(ctx context.Context, rangeSpec string) ([]string, error) {
 	out, err := runCmd(ctx, "", "git", "rev-list", "--reverse", rangeSpec)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"slices"
 	"text/tabwriter"
 )
@@ -72,13 +73,15 @@ type RootFlags struct {
 
 // ParseRootFlags wires common flags into fs and returns the struct pointer.
 func ParseRootFlags(fs *flag.FlagSet) *RootFlags {
+	gv := runtime.Version()
+	notesRef := fmt.Sprintf("refs/notes/benches/%s-%s-%s", runtime.GOOS, runtime.GOARCH, gv)
 	cfg := &RootFlags{}
 	fs.BoolVar(&cfg.Verbose, "v", false, "verbose output")
 	fs.IntVar(&cfg.Count, "count", 10, "benchmark count")
 	fs.StringVar(&cfg.Benchtime, "benchtime", "", "benchtime duration (e.g. 2s)")
 	fs.StringVar(&cfg.Bench, "bench", ".", "benchmark regex")
 	fs.StringVar(&cfg.Pkgs, "pkgs", "./...", "comma-separated package list")
-	fs.StringVar(&cfg.NotesRef, "notes-ref", "", "override notes ref (default derived from env)")
+	fs.StringVar(&cfg.NotesRef, "notes-ref", notesRef, "override notes ref (default derived from env)")
 	fs.BoolVar(&cfg.Force, "force", false, "allow cross-env comparisons")
 	return cfg
 }

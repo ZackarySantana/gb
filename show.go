@@ -54,9 +54,6 @@ func parseShow(ctx context.Context, stderr io.Writer, args []string) (*ShowArgs,
 // It prints the exact JSON payload that Backfill stored (pretty-formatted).
 func Show(ctx context.Context, a *ShowArgs, stdout, stderr io.Writer) error {
 	notesRef := a.Root.NotesRef
-	if strings.TrimSpace(notesRef) == "" {
-		notesRef = deriveNotesRef()
-	}
 
 	sha, err := resolveCommit(ctx, a.Ref)
 	if err != nil {
