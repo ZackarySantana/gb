@@ -17,11 +17,11 @@ func init() {
 			fmt.Sprintf("%s REF\tShow stored note for a commit/ref", cmdShow),
 		},
 		run: func(ctx context.Context, params *commandParams) error {
-			a, err := parseShow(ctx, params)
-			if err != nil {
+			var ref string
+			if err := requireArgs(params.fs.Args(), &ref); err != nil {
 				return err
 			}
-			return Show(ctx, a, params.logger)
+			return Show(ctx, &ShowArgs{Root: params.root, Ref: ref}, params.logger)
 		},
 	})
 }
@@ -31,17 +31,6 @@ const cmdShow = "show"
 type ShowArgs struct {
 	Root *RootFlags
 	Ref  string
-}
-
-func parseShow(_ context.Context, params *commandParams) (*ShowArgs, error) {
-	if err := params.fs.Parse(params.args); err != nil {
-		return nil, err
-	}
-	var ref string
-	if err := requireArgs(params.fs.Args(), &ref); err != nil {
-		return nil, err
-	}
-	return &ShowArgs{Root: params.root, Ref: ref}, nil
 }
 
 // Show displays a stored note for a given commit/ref.

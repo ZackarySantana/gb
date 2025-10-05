@@ -16,11 +16,7 @@ func init() {
 			"-bench '^BenchmarkFoo$'\tBenchmark one test",
 		},
 		run: func(ctx context.Context, params *commandParams) error {
-			a, err := parseDefault(ctx, params)
-			if err != nil {
-				return err
-			}
-			return Default(ctx, a, params.logger)
+			return Default(ctx, &DefaultArgs{Root: params.root}, params.logger)
 		},
 	}
 	cmds = append([]command{defaultCMD}, cmds...) // Default command is first
@@ -28,10 +24,6 @@ func init() {
 
 type DefaultArgs struct {
 	Root *RootFlags
-}
-
-func parseDefault(_ context.Context, params *commandParams) (*DefaultArgs, error) {
-	return &DefaultArgs{Root: params.root}, nil
 }
 
 func Default(ctx context.Context, a *DefaultArgs, logger *slog.Logger) error {

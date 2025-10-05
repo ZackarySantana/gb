@@ -16,11 +16,11 @@ func init() {
 			fmt.Sprintf("%s origin/main HEAD\tCompare two commits", cmdCompare),
 		},
 		run: func(ctx context.Context, params *commandParams) error {
-			a, err := parseCompare(ctx, params)
-			if err != nil {
-				return err
+			base, head := "origin/main", "HEAD"
+			if filled := optionalArgs(params.fs.Args(), &base, &head); !filled {
+				params.logger.DebugContext(ctx, "using some defaults", "base", base, "head", head)
 			}
-			return Compare(ctx, a, params.logger)
+			return Compare(ctx, &CompareArgs{Root: params.root, Base: base, Head: head}, params.logger)
 		},
 	})
 }
@@ -31,17 +31,6 @@ type CompareArgs struct {
 	Root *RootFlags
 	Base string
 	Head string
-}
-
-func parseCompare(ctx context.Context, params *commandParams) (*CompareArgs, error) {
-	if err := params.fs.Parse(params.args); err != nil {
-		return nil, err
-	}
-	base, head := "origin/main", "HEAD"
-	if filled := optionalArgs(params.fs.Args(), &base, &head); !filled {
-		params.logger.DebugContext(ctx, "using some defaults", "base", base, "head", head)
-	}
-	return &CompareArgs{Root: params.root, Base: base, Head: head}, nil
 }
 
 func Compare(ctx context.Context, a *CompareArgs, logger *slog.Logger) error {

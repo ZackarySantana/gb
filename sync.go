@@ -17,11 +17,7 @@ func init() {
 			params.flags["remote"] = remote
 		},
 		run: func(ctx context.Context, params *commandParams) error {
-			a, err := parseSync(ctx, params)
-			if err != nil {
-				return err
-			}
-			return Sync(ctx, a, params.logger)
+			return Sync(ctx, &SyncArgs{Root: params.root, Remote: *params.flags["remote"]}, params.logger)
 		},
 	})
 }
@@ -31,10 +27,6 @@ const cmdSync = "sync"
 type SyncArgs struct {
 	Root   *RootFlags
 	Remote string
-}
-
-func parseSync(_ context.Context, params *commandParams) (*SyncArgs, error) {
-	return &SyncArgs{Root: params.root, Remote: *params.flags["remote"]}, nil
 }
 
 func Sync(ctx context.Context, a *SyncArgs, logger *slog.Logger) error {
