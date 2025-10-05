@@ -1,0 +1,1 @@
+{"bench_args":["test","./...","-run=^$","-bench",".","-benchmem","-count","10"],"commit":"65b8d0436d765890a6b043b01d6a347cbcf53a74","created_at":"2025-10-05T02:17:51Z","env":{"cpus":24,"go_version":"go1.25.1","goarch":"amd64","gomaxprocs":24,"goos":"linux","host":"lidtop"},"raw":"?   \tgithub.com/zackarysantana/gb\t[no test files]\n","schema":1}
