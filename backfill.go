@@ -23,8 +23,6 @@ func (cmd *cmd) Backfill() *cli.Command {
 			&cli.StringArg{Name: "since", UsageText: "<git ref>"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			fmt.Println("backfill (todo)", "ref", c.StringArg("REF"))
-
 			notesRef := c.String("notes-ref")
 			since := c.StringArg("since")
 
