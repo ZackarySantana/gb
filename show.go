@@ -67,14 +67,12 @@ func Show(ctx context.Context, a *ShowArgs, logger *slog.Logger) error {
 	}
 
 	// Pretty-print the JSON payload.
-	var js any
+	var js map[string]any
 	if err := json.Unmarshal(raw, &js); err != nil {
-		// If the payload isn't valid JSON for some reason, just print as-is.
-		logger.InfoContext(ctx, "raw notes", "commit", sha, "notes_ref", notesRef, "raw", string(raw))
+		logger.ErrorContext(ctx, "unmarshal notes", "error", err, "commit", sha, "notes_ref", notesRef)
 		return nil
 	}
-	b, _ := json.MarshalIndent(js, "", "  ")
-	logger.InfoContext(ctx, "formatted notes", "commit", sha, "notes_ref", notesRef, "formatted", string(b))
+	logger.InfoContext(ctx, "result", "commit", sha, "notes_ref", notesRef)
 	return nil
 }
 
