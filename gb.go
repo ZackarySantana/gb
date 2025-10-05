@@ -49,7 +49,7 @@ type command struct {
 
 func (c *command) execute(ctx context.Context, logger *slog.Logger, logLeveler *slog.LevelVar, args []string) error {
 	fs, root := setupFlags(ctx, logger)
-	params := &commandParams{logger: logger, fs: fs, root: root, args: args}
+	params := &commandParams{logger: logger, fs: fs, root: root, args: args, flags: map[string]*string{}}
 	if c.flags != nil {
 		c.flags(ctx, params)
 	}
@@ -60,7 +60,7 @@ func (c *command) execute(ctx context.Context, logger *slog.Logger, logLeveler *
 		logLeveler.Set(slog.LevelDebug)
 	}
 
-	return c.run(ctx, &commandParams{logger: logger, fs: fs, root: root, args: fs.Args()})
+	return c.run(ctx, params)
 }
 
 func init() {
