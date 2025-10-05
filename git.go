@@ -59,7 +59,7 @@ func gitWorktreeRemove(ctx context.Context, dir string) error {
 }
 
 func gitRevList(ctx context.Context, rangeSpec string) ([]string, error) {
-	out, err := runCmd(ctx, "", "git", "rev-list", "--reverse", rangeSpec)
+	out, err := runCmd(ctx, "", "git", "rev-list", rangeSpec)
 	if err != nil {
 		return nil, err
 	}
