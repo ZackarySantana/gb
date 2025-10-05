@@ -5,11 +5,40 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 	"text/tabwriter"
 )
 
+func init() {
+	cmds = append(cmds,
+		command{
+			name:    "version",
+			aliases: []string{"--version"},
+			usages: []string{
+				"version\tShow version",
+			},
+			run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
+				fmt.Fprintln(stdout, version)
+				return nil
+			},
+		},
+		command{
+			name:    "help",
+			aliases: []string{"-h", "--help"},
+			usages: []string{
+				"help\tShow help",
+			},
+			run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
+				Usage(stdout, prog)
+				return nil
+			},
+		},
+	)
+}
+
 type command struct {
 	name     string
+	aliases  []string
 	usages   []string
 	examples []string
 	run      func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error
@@ -85,17 +114,8 @@ func Run(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
 
 	targetCMD := argv[1]
 
-	switch targetCMD {
-	case "-h", "--help", "help":
-		Usage(stderr, prog)
-		return nil
-	case "-v", "--version", "version":
-		fmt.Fprintln(stdout, version)
-		return nil
-	}
-
 	for _, cmd := range cmds {
-		if targetCMD != cmd.name {
+		if targetCMD != cmd.name && !slices.Contains(cmd.aliases, targetCMD) {
 			continue
 		}
 		return cmd.run(ctx, stdout, stderr, prog, argv[2:])
