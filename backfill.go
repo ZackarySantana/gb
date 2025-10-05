@@ -17,8 +17,8 @@ func init() {
 		examples: []string{
 			fmt.Sprintf("%s --since origin/main\tBackfill history", cmdBackfill),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
-			a, err := parseBackfill(stderr, prog, args)
+		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
+			a, err := parseBackfill(ctx, stderr, args)
 			if err != nil {
 				return err
 			}
@@ -34,12 +34,12 @@ type BackfillArgs struct {
 	Since string
 }
 
-func parseBackfill(stderr io.Writer, prog string, args []string) (*BackfillArgs, error) {
+func parseBackfill(ctx context.Context, stderr io.Writer, args []string) (*BackfillArgs, error) {
 	fs := flag.NewFlagSet(cmdBackfill, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := ParseRootFlags(fs)
 	since := fs.String("since", "", "start ref (required)")
-	fs.Usage = func() { Usage(stderr, prog) }
+	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

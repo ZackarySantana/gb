@@ -16,8 +16,8 @@ func init() {
 		examples: []string{
 			fmt.Sprintf("%s origin/main HEAD\tCompare two commits", cmdCompare),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
-			a, err := parseCompare(stderr, prog, args)
+		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
+			a, err := parseCompare(ctx, stderr, args)
 			if err != nil {
 				return err
 			}
@@ -34,11 +34,11 @@ type CompareArgs struct {
 	Head string
 }
 
-func parseCompare(stderr io.Writer, prog string, args []string) (*CompareArgs, error) {
+func parseCompare(ctx context.Context, stderr io.Writer, args []string) (*CompareArgs, error) {
 	fs := flag.NewFlagSet(cmdCompare, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(stderr, prog) }
+	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

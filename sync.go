@@ -13,8 +13,8 @@ func init() {
 		usages: []string{
 			fmt.Sprintf("%s --remote NAME\tSync benchmark notes with remote (push/fetch)\n", cmdSync),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
-			a, err := parseSync(stderr, prog, args)
+		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
+			a, err := parseSync(ctx, stderr, args)
 			if err != nil {
 				return err
 			}
@@ -30,12 +30,12 @@ type SyncArgs struct {
 	Remote string
 }
 
-func parseSync(stderr io.Writer, prog string, args []string) (*SyncArgs, error) {
+func parseSync(ctx context.Context, stderr io.Writer, args []string) (*SyncArgs, error) {
 	fs := flag.NewFlagSet(cmdSync, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := ParseRootFlags(fs)
 	remote := fs.String("remote", "origin", "git remote to sync with")
-	fs.Usage = func() { Usage(stderr, prog) }
+	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

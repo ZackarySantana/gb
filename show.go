@@ -13,8 +13,8 @@ func init() {
 		usages: []string{
 			fmt.Sprintf("%s REF\tShow stored note for a commit/ref", cmdShow),
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
-			a, err := parseShow(stderr, prog, args)
+		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
+			a, err := parseShow(ctx, stderr, args)
 			if err != nil {
 				return err
 			}
@@ -30,11 +30,11 @@ type ShowArgs struct {
 	Ref  string
 }
 
-func parseShow(stderr io.Writer, prog string, args []string) (*ShowArgs, error) {
+func parseShow(ctx context.Context, stderr io.Writer, args []string) (*ShowArgs, error) {
 	fs := flag.NewFlagSet(cmdShow, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(stderr, prog) }
+	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}

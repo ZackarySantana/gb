@@ -5,9 +5,33 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"slices"
 	"text/tabwriter"
 )
+
+func main() {
+	if err := Run(context.Background(), os.Args, os.Stdout, os.Stderr); err != nil {
+		os.Exit(1)
+	}
+}
+
+var (
+	// version is set at build time with -ldflags "-X main.version=v0.1.0".
+	version = "dev"
+	tool    = "gb"
+
+	defaultCMD command
+	cmds       = []command{}
+)
+
+type command struct {
+	name     string
+	aliases  []string
+	usages   []string
+	examples []string
+	run      func(ctx context.Context, stdout, stderr io.Writer, args []string) error
+}
 
 func init() {
 	cmds = append(cmds,
@@ -17,7 +41,7 @@ func init() {
 			usages: []string{
 				"version\tShow version",
 			},
-			run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
+			run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
 				fmt.Fprintln(stdout, version)
 				return nil
 			},
@@ -28,26 +52,13 @@ func init() {
 			usages: []string{
 				"help\tShow help",
 			},
-			run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
-				Usage(stdout, prog)
+			run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
+				Usage(ctx, stdout)
 				return nil
 			},
 		},
 	)
 }
-
-type command struct {
-	name     string
-	aliases  []string
-	usages   []string
-	examples []string
-	run      func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error
-}
-
-var (
-	defaultCMD command
-	cmds       = []command{}
-)
 
 type RootFlags struct {
 	Verbose   bool
@@ -72,9 +83,9 @@ func ParseRootFlags(fs *flag.FlagSet) *RootFlags {
 	return cfg
 }
 
-func Usage(stderr io.Writer, invokedName string) {
-	name := invokedName
-	if version == "dev" {
+func Usage(ctx context.Context, stderr io.Writer) {
+	name, ok := ctx.Value(cmdName).(string)
+	if !ok || version == "dev" {
 		name = fmt.Sprintf("%s_dev", tool)
 	}
 	w := tabwriter.NewWriter(stderr, 0, 8, 2, ' ', 0)
@@ -103,13 +114,20 @@ func Usage(stderr io.Writer, invokedName string) {
 	_ = w.Flush()
 }
 
+type cmdValues struct{}
+
+var (
+	cmdName = cmdValues{}
+)
+
 // Run dispatches based on argv[1]. It then parses the rest of the arguments
 // and calls the appropriate command function.
 func Run(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
 	prog := programName(argv)
+	ctx = context.WithValue(ctx, cmdName, prog)
 
 	if len(argv) == 1 {
-		return defaultCMD.run(ctx, stdout, stderr, prog, argv[1:])
+		return defaultCMD.run(ctx, stdout, stderr, argv[1:])
 	}
 
 	targetCMD := argv[1]
@@ -118,10 +136,10 @@ func Run(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
 		if targetCMD != cmd.name && !slices.Contains(cmd.aliases, targetCMD) {
 			continue
 		}
-		return cmd.run(ctx, stdout, stderr, prog, argv[2:])
+		return cmd.run(ctx, stdout, stderr, argv[2:])
 	}
 
-	return defaultCMD.run(ctx, stdout, stderr, prog, argv[1:])
+	return defaultCMD.run(ctx, stdout, stderr, argv[1:])
 }
 
 func programName(argv []string) string {

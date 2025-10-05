@@ -17,8 +17,8 @@ func init() {
 			"\tCompare working tree vs HEAD",
 			"-bench '^BenchmarkFoo$'\tBenchmark one test",
 		},
-		run: func(ctx context.Context, stdout, stderr io.Writer, prog string, args []string) error {
-			a, err := parseDefault(stderr, prog, args)
+		run: func(ctx context.Context, stdout, stderr io.Writer, args []string) error {
+			a, err := parseDefault(ctx, stderr, args)
 			if err != nil {
 				return err
 			}
@@ -32,11 +32,11 @@ type DefaultArgs struct {
 	Root *RootFlags
 }
 
-func parseDefault(stderr io.Writer, prog string, args []string) (*DefaultArgs, error) {
-	fs := flag.NewFlagSet(prog, flag.ContinueOnError)
+func parseDefault(ctx context.Context, stderr io.Writer, args []string) (*DefaultArgs, error) {
+	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := ParseRootFlags(fs)
-	fs.Usage = func() { Usage(stderr, prog) }
+	fs.Usage = func() { Usage(ctx, stderr) }
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
