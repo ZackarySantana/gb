@@ -22,9 +22,13 @@ func (cmd *cmd) Backfill() *cli.Command {
 		Arguments: []cli.Argument{
 			&cli.StringArg{Name: "since", UsageText: "<git ref>"},
 		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "force", Usage: "re-benchmark even if note(s) exists"},
+		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			notesRef := c.String("notes-ref")
 			since := c.StringArg("since")
+			force := c.Bool("force")
 
 			cmd.logger.DebugContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"..HEAD")
 
@@ -54,9 +58,12 @@ func (cmd *cmd) Backfill() *cli.Command {
 					continue
 				}
 				if has {
-					skipped++
-					cmd.logger.DebugContext(ctx, "note exists, skipping", "commit", commit)
-					continue
+					if !force {
+						skipped++
+						cmd.logger.DebugContext(ctx, "note exists, skipping", "commit", commit)
+						continue
+					}
+					cmd.logger.DebugContext(ctx, "note exists but force enabled, re-benchmarking", "commit", commit)
 				}
 
 				cmd.logger.DebugContext(ctx, "benchmarking", "commit", commit)

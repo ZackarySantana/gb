@@ -22,7 +22,6 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			&cli.StringFlag{Name: "bench", Value: ".", Usage: "benchmark regex"},
 			&cli.StringFlag{Name: "pkgs", Value: "./...", Usage: "comma-separated package list"},
 			&cli.StringFlag{Name: "notes-ref", Value: notesRef, Usage: "override notes ref"},
-			&cli.BoolFlag{Name: "force", Usage: "allow cross-environment comparisons"},
 		},
 		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
 			if c.Bool("v") {
