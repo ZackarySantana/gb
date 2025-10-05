@@ -21,10 +21,9 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			&cli.StringFlag{Name: "benchtime", Usage: "benchtime duration (e.g. 2s)"},
 			&cli.StringFlag{Name: "bench", Value: ".", Usage: "benchmark regex"},
 			&cli.StringFlag{Name: "pkgs", Value: "./...", Usage: "comma-separated package list"},
-			&cli.StringFlag{Name: "notes-ref", Value: notesRef, Usage: "override notes ref (default derived from env)"},
+			&cli.StringFlag{Name: "notes-ref", Value: notesRef, Usage: "override notes ref"},
 			&cli.BoolFlag{Name: "force", Usage: "allow cross-environment comparisons"},
 		},
-		Action: cmd.Default,
 		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
 			if c.Bool("v") {
 				logLevel.Set(slog.LevelDebug)
@@ -38,11 +37,4 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			cmd.Sync(),
 		},
 	}
-}
-
-func (cmd *cmd) Default(ctx context.Context, c *cli.Command) error {
-	for _, flag := range c.Flags {
-		slog.Default().Info("flag", "name", flag.Names()[0], "value", fmt.Sprintf("%v", flag.Get()))
-	}
-	return nil
 }
