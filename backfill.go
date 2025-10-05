@@ -28,7 +28,7 @@ func (cmd *cmd) Backfill() *cli.Command {
 			since := c.StringArg("since")
 			force := c.Bool("force")
 
-			cmd.logger.DebugContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"^..HEAD")
+			cmd.logger.InfoContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"^..HEAD")
 
 			commits, err := gitRevList(ctx, since+"^..HEAD")
 			if err != nil {
@@ -42,13 +42,13 @@ func (cmd *cmd) Backfill() *cli.Command {
 
 			cmd.logger.DebugContext(ctx, "found commits", "benchmark command", strings.Join(benchmarkArgs, " "), "commits", strings.Join(commits, ", "))
 
-			var done, skipped, failed int
+			var done, skipped int
+			var failed []error
 			start := time.Now()
 			for _, commit := range commits {
 				isSkipped, err := cmd.benchmark(ctx, notesRef, commit, benchmarkArgs, force)
 				if err != nil {
-					cmd.logger.ErrorContext(ctx, "benchmark failed", "error", err, "commit", commit)
-					failed++
+					failed = append(failed, fmt.Errorf("commit %s: %w", commit, err))
 					continue
 				}
 				if isSkipped {
@@ -59,9 +59,9 @@ func (cmd *cmd) Backfill() *cli.Command {
 			}
 
 			elapsed := time.Since(start).Truncate(time.Millisecond)
-			cmd.logger.InfoContext(ctx, "backfill complete", "noted", done, "skipped", skipped, "failed", failed, "elapsed", elapsed)
-			if failed > 0 {
-				return errors.New("some commits failed to backfill")
+			cmd.logger.InfoContext(ctx, "backfill complete", "noted", done, "skipped", skipped, "failed", len(failed), "elapsed", elapsed)
+			if len(failed) > 0 {
+				return fmt.Errorf("some benchmarks failed: %v", failed)
 			}
 			return nil
 		},
