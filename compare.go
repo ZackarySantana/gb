@@ -13,8 +13,9 @@ func (cmd *cmd) Compare() *cli.Command {
 		Name:  "compare",
 		Usage: "Compare stored notes for two refs",
 		Arguments: []cli.Argument{
-			&cli.StringArg{Name: "base", UsageText: "<git ref>", Value: "HEAD~1"},
-			&cli.StringArg{Name: "head", UsageText: "<git ref>", Value: "HEAD"},
+			// The UsageText needs a space because urfave/cli does not put spaces between arguments.
+			&cli.StringArg{Name: "base", UsageText: "<base ref (default: HEAD~1)> ", Value: "HEAD~1"},
+			&cli.StringArg{Name: "head", UsageText: "<head ref (default: HEAD)>", Value: "HEAD"},
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "create", Aliases: []string{"c"}, Usage: "creates notes if missing (runs benchmarks)"},
