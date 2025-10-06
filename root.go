@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"runtime"
@@ -15,8 +17,9 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 	if err != nil {
 		cmd.logger.Error("unable to get git user email to generate a unique note", "error", err)
 	}
+	sum := sha1.Sum([]byte(gitEmail))
 	gv := runtime.Version()
-	notesRef := fmt.Sprintf("refs/notes/gb/%s/%s-%s-%s", gitEmail, runtime.GOOS, runtime.GOARCH, gv)
+	notesRef := fmt.Sprintf("refs/notes/gb/%s/%s-%s-%s", hex.EncodeToString(sum[:8]), runtime.GOOS, runtime.GOARCH, gv)
 	return &cli.Command{
 		Name:  "gb",
 		Usage: "Go benchmark notes manager",
