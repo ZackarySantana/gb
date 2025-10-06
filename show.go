@@ -30,7 +30,7 @@ func (cmd *cmd) Show() *cli.Command {
 				return fmt.Errorf("resolving commit %s: %w", ref, err)
 			}
 
-			cmd.logger.DebugContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
+			cmd.logger.InfoContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
 
 			if !all {
 				note, err := loadNote(ctx, notesRef, sha)
@@ -55,9 +55,10 @@ func (cmd *cmd) Show() *cli.Command {
 			for ref, raw := range notes {
 				var note Note
 				if err := json.Unmarshal(raw, &note); err != nil {
-					return fmt.Errorf("reading note for commit %s ref %s: %w", sha, ref, err)
+					cmd.logger.WarnContext(ctx, "unknown note format", "notes_ref", ref, "error", err)
+				} else {
+					cmd.logNote(ctx, &note, ref)
 				}
-				cmd.logNote(ctx, &note, ref)
 			}
 
 			return nil
