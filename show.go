@@ -42,7 +42,6 @@ func (cmd *cmd) Show() *cli.Command {
 				return nil
 			}
 
-			// If it's all, we
 			notes, err := listAllNotesRefs(ctx, sha)
 			if err != nil {
 				return fmt.Errorf("listing all notes: %w", err)
