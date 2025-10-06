@@ -42,7 +42,7 @@ func (cmd *cmd) Show() *cli.Command {
 				return nil
 			}
 
-			notes, err := listAllNotesRefs(ctx, sha)
+			notes, err := listAllNotesRefsForCommit(ctx, sha)
 			if err != nil {
 				return fmt.Errorf("listing all notes: %w", err)
 			}
