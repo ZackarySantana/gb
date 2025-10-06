@@ -28,16 +28,11 @@ func (cmd *cmd) Show() *cli.Command {
 
 			cmd.logger.DebugContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
 
-			raw, err := gitNotesShow(ctx, notesRef, sha)
+			note, err := loadNote(ctx, notesRef, sha)
 			if err != nil {
 				return fmt.Errorf("reading note for commit %s: %w", sha, err)
 			}
 
-			var note Note
-			if err := json.Unmarshal(raw, &note); err != nil {
-				return fmt.Errorf("reading note for commit %s: %w", sha, err)
-			}
-			// TODO: use a table format for non-JSON output?
 			cmd.logger.InfoContext(ctx, "result", "commit", sha, "notes_ref", notesRef)
 			for _, bench := range note.Parsed.Benches {
 				stats := bench.Stats
@@ -53,4 +48,17 @@ func (cmd *cmd) Show() *cli.Command {
 			return nil
 		},
 	}
+}
+
+func loadNote(ctx context.Context, notesRef, sha string) (*Note, error) {
+	raw, err := gitNotesShow(ctx, notesRef, sha)
+	if err != nil {
+		return nil, fmt.Errorf("reading note for commit %s: %w", sha, err)
+	}
+
+	var note Note
+	if err := json.Unmarshal(raw, &note); err != nil {
+		return nil, fmt.Errorf("reading note for commit %s: %w", sha, err)
+	}
+	return &note, nil
 }
