@@ -114,6 +114,14 @@ func gitResolveCommit(ctx context.Context, ref string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+func gitEmail(ctx context.Context) (string, error) {
+	out, err := runCmd(ctx, "", "git", "config", "user.email")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 func runCmd(ctx context.Context, dir string, bin string, args ...string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, bin, args...)
 	if dir != "" {
