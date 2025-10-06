@@ -23,11 +23,18 @@ View benchmark notes for a specific commit:
 
 ```bash
 gb show HEAD~3
-# Show all notes (e.g. ones pushed from remote)
-gb show HEAD~4 --all
 ```
 
 ![Show Example](./imgs/show.png)
+
+View all benchmark notes for a specific commit (e.g. ones pushed from remote):
+
+```bash
+gb show HEAD~4 --all
+```
+
+(arm64 vs amd64 benchmarks shown below)
+![Show All Example](./imgs/show-all.png)
 
 Compare benchmarks between two commits:
 
