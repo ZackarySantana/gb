@@ -35,7 +35,7 @@ func (cmd *cmd) Backfill() *cli.Command {
 				cmd.logger.InfoContext(ctx, "no commits to backfill")
 				return nil
 			}
-			benchmarkArgs := benchmarkCommand(c)
+			benchmarkArgs := benchmarkCommand(c.String("pkgs"), c.String("bench"), c.String("benchtime"), c.Int("count"))
 
 			cmd.logger.DebugContext(ctx, "found commits", "benchmark command", strings.Join(benchmarkArgs, " "), "commits", strings.Join(commits, ", "))
 
@@ -98,17 +98,16 @@ func (cmd *cmd) benchmark(ctx context.Context, notesRef, commit string, benchmar
 	return false, nil
 }
 
-func benchmarkCommand(c *cli.Command) []string {
-	pkgs := c.String("pkgs")
+func benchmarkCommand(pkgs, bench, benchtime string, count int) []string {
 	if strings.TrimSpace(pkgs) == "" {
 		pkgs = "./..."
 	}
-	args := []string{"go", "test", pkgs, "-run=^$", "-bench", c.String("bench"), "-benchmem"}
-	if c.Int("count") > 0 {
-		args = append(args, "-count", fmt.Sprint(c.Int("count")))
+	args := []string{"go", "test", pkgs, "-run=^$", "-bench", bench, "-benchmem"}
+	if count > 0 {
+		args = append(args, "-count", fmt.Sprint(count))
 	}
-	if strings.TrimSpace(c.String("benchtime")) != "" {
-		args = append(args, "-benchtime", c.String("benchtime"))
+	if strings.TrimSpace(benchtime) != "" {
+		args = append(args, "-benchtime", benchtime)
 	}
 	return args
 }
