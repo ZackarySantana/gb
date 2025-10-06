@@ -30,7 +30,7 @@ func (cmd *cmd) Show() *cli.Command {
 
 			note, err := loadNote(ctx, notesRef, sha)
 			if err != nil {
-				return fmt.Errorf("reading note for commit %s: %w", sha, err)
+				return err
 			}
 
 			cmd.logger.InfoContext(ctx, "result", "commit", sha, "notes_ref", notesRef)
