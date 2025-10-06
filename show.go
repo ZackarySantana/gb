@@ -48,6 +48,10 @@ func (cmd *cmd) Show() *cli.Command {
 				return fmt.Errorf("listing all notes: %w", err)
 			}
 
+			if len(notes) == 0 {
+				return fmt.Errorf("no notes found for commit %s", sha)
+			}
+
 			for ref, raw := range notes {
 				var note Note
 				if err := json.Unmarshal(raw, &note); err != nil {
