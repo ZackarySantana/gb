@@ -1,8 +1,6 @@
-# GB- Go Benchmark
+# Go Benchmark Notes Manager
 
-A tool to manage and track Go benchmarks over time using git notes.
-
-`gb` stores benchmarks in git notes, allowing you to compare performance between different commits easily.
+`gb` stores benchmarks in git notes, making it easy to track performance changes over time.
 
 ## Installation
 
@@ -75,7 +73,3 @@ GLOBAL OPTIONS:
 -   --pkgs string comma-separated package list (default: "./...")
 -   --notes-ref string override notes ref (will always be prefixed with refs/notes/gb/) (default: "601e17bd28b350c5/linux-amd64-go1.25.1")
 -   --help, -h show help
-
-```
-
-```
