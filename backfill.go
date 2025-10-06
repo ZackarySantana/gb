@@ -19,15 +19,22 @@ func (cmd *cmd) Backfill() *cli.Command {
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "re-benchmark even if note(s) exists"},
+			&cli.BoolFlag{Name: "single", Usage: "single commit to benchmark (bypasses range)"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			notesRef := c.String("notes-ref")
+			notesRef := getNotesRef(c)
 			since := c.StringArg("since")
 			force := c.Bool("force")
+			single := c.Bool("single")
 
-			cmd.logger.InfoContext(ctx, "backfill start", "notes_ref", notesRef, "range", since+"^..HEAD")
+			rangeSpec := since + "^..HEAD"
+			if single {
+				rangeSpec = since + "^.." + since
+			}
 
-			commits, err := gitRevList(ctx, since+"^..HEAD")
+			cmd.logger.InfoContext(ctx, "backfill start", "notes_ref", notesRef, "range", rangeSpec)
+
+			commits, err := gitRevList(ctx, rangeSpec)
 			if err != nil {
 				return fmt.Errorf("git rev-list: %w", err)
 			}

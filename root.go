@@ -19,7 +19,7 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 	}
 	sum := sha1.Sum([]byte(gitEmail))
 	gv := runtime.Version()
-	notesRef := fmt.Sprintf("refs/notes/gb/%s/%s-%s-%s", hex.EncodeToString(sum[:8]), runtime.GOOS, runtime.GOARCH, gv)
+	notesRef := fmt.Sprintf("%s/%s-%s-%s", hex.EncodeToString(sum[:8]), runtime.GOOS, runtime.GOARCH, gv)
 	return &cli.Command{
 		Name:  "gb",
 		Usage: "Go benchmark notes manager",
@@ -29,12 +29,13 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			&cli.StringFlag{Name: "benchtime", Usage: "benchtime duration (e.g. 2s)"},
 			&cli.StringFlag{Name: "bench", Value: ".", Usage: "benchmark regex"},
 			&cli.StringFlag{Name: "pkgs", Value: "./...", Usage: "comma-separated package list"},
-			&cli.StringFlag{Name: "notes-ref", Value: notesRef, Usage: "override notes ref"},
+			&cli.StringFlag{Name: "notes-ref", Value: notesRef, Usage: "override notes ref (will always be prefixed with refs/notes/gb/)"},
 		},
 		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
 			if c.Bool("v") {
 				logLevel.Set(slog.LevelDebug)
 			}
+			// update notes-ref to be a full ref
 			return ctx, nil
 		},
 		After: func(ctx context.Context, c *cli.Command) error {
@@ -63,4 +64,12 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 			cmd.Sync(),
 		},
 	}
+}
+
+func getNotesRef(c *cli.Command) string {
+	ref := c.String("notes-ref")
+	if !strings.HasPrefix(ref, "refs/notes/gb/") {
+		ref = "refs/notes/gb/" + ref
+	}
+	return ref
 }

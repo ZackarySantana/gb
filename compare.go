@@ -21,7 +21,7 @@ func (cmd *cmd) Compare() *cli.Command {
 			&cli.BoolFlag{Name: "create", Aliases: []string{"c"}, Usage: "creates notes if missing (runs benchmarks)"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			notesRef := c.String("notes-ref")
+			notesRef := getNotesRef(c)
 			baseRef := c.StringArg("base")
 			headRef := c.StringArg("head")
 			create := c.Bool("create")

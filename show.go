@@ -17,7 +17,7 @@ func (cmd *cmd) Show() *cli.Command {
 			&cli.BoolFlag{Name: "all", Aliases: []string{"a"}, Usage: "show all notes (not just the one targetted by 'notes-ref')"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			notesRef := c.String("notes-ref")
+			notesRef := getNotesRef(c)
 			ref := c.StringArg("ref")
 			all := c.Bool("all")
 
@@ -30,8 +30,16 @@ func (cmd *cmd) Show() *cli.Command {
 				return fmt.Errorf("resolving commit %s: %w", ref, err)
 			}
 
+			cmd.logger.DebugContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
+
 			if !all {
-				return cmd.showNote(ctx, notesRef, sha)
+				note, err := loadNote(ctx, notesRef, sha)
+				if err != nil {
+					return err
+				}
+
+				cmd.logNote(ctx, note, notesRef)
+				return nil
 			}
 
 			// If it's all, we
@@ -45,8 +53,7 @@ func (cmd *cmd) Show() *cli.Command {
 				if err := json.Unmarshal(raw, &note); err != nil {
 					return fmt.Errorf("reading note for commit %s ref %s: %w", sha, ref, err)
 				}
-				cmd.logger.InfoContext(ctx, "result", "commit", sha, "notes_ref", ref)
-				cmd.logNote(ctx, &note)
+				cmd.logNote(ctx, &note, ref)
 			}
 
 			return nil
@@ -54,24 +61,12 @@ func (cmd *cmd) Show() *cli.Command {
 	}
 }
 
-func (cmd *cmd) showNote(ctx context.Context, notesRef, sha string) error {
-	cmd.logger.DebugContext(ctx, "show start", "notes_ref", notesRef, "commit", sha)
-
-	note, err := loadNote(ctx, notesRef, sha)
-	if err != nil {
-		return err
-	}
-
-	cmd.logger.InfoContext(ctx, "result", "commit", sha, "notes_ref", notesRef)
-	cmd.logNote(ctx, note)
-	return nil
-}
-
-func (cmd *cmd) logNote(ctx context.Context, note *Note) {
+func (cmd *cmd) logNote(ctx context.Context, note *Note, notesRef string) {
 	for _, bench := range note.Parsed.Benches {
 		stats := bench.Stats
 		cmd.logger.InfoContext(ctx, "bench result",
 			"benchmark", bench.Name,
+			"notes_ref", notesRef,
 			"ns_per_op_mean", stats.NsPerOpMean,
 			"ns_per_op_median", stats.NsPerOpMedian,
 			"bytes_per_op_mean", stats.BytesPerOpMean,
