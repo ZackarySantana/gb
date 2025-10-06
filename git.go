@@ -106,6 +106,28 @@ func gitNotesShow(ctx context.Context, notesRef, commit string) ([]byte, error) 
 	return out, nil
 }
 
+func listAllNotesRefs(ctx context.Context, commit string) (map[string][]byte, error) {
+	out, err := runCmd(ctx, "", "git", "for-each-ref", "--format=%(refname)", "refs/notes")
+	if err != nil {
+		return nil, fmt.Errorf("git for-each-ref refs/notes: %w", err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	notes := make(map[string][]byte)
+
+	for _, ref := range lines {
+		ref = strings.TrimSpace(ref)
+		if ref == "" {
+			continue
+		}
+
+		value, err := gitNotesShow(ctx, ref, commit)
+		if err == nil {
+			notes[ref] = value
+		}
+	}
+	return notes, nil
+}
+
 func gitResolveCommit(ctx context.Context, ref string) (string, error) {
 	out, err := runCmd(ctx, "", "git", "rev-parse", ref)
 	if err != nil {
