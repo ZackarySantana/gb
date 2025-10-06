@@ -23,13 +23,6 @@ func (cmd *cmd) Sync() *cli.Command {
 
 			cmd.logger.InfoContext(ctx, "sync start", "remote", remote, "force", force)
 
-			cmd.logger.InfoContext(ctx, "fetching", "remote", remote, "force", force)
-			args := []string{"fetch", remote, "+refs/notes/gb/*:refs/notes/gb/*"}
-			cmd.logger.DebugContext(ctx, "git", "args", strings.Join(args, " "))
-			if out, err := runCmd(ctx, "", "git", args...); err != nil {
-				return fmt.Errorf("git fetch notes: %v: %s", err, string(out))
-			}
-
 			cmd.logger.InfoContext(ctx, "pushing", "remote", remote, "force", force)
 			refs, err := listAllNotesRefs(ctx)
 			if err != nil {
@@ -37,27 +30,33 @@ func (cmd *cmd) Sync() *cli.Command {
 			}
 			if len(refs) == 0 {
 				cmd.logger.InfoContext(ctx, "no notes refs found, nothing to push")
-				return nil
+			} else {
+				group, ctx := errgroup.WithContext(ctx)
+				for _, ref := range refs {
+					group.Go(func() error {
+						args := []string{"push"}
+						if force {
+							args = append(args, "--force")
+						}
+						args = append(args, remote, ref)
+						cmd.logger.DebugContext(ctx, "git", "args", strings.Join(args, " "))
+						if out, err := runCmd(ctx, "", "git", args...); err != nil {
+							return fmt.Errorf("git push %s: %v: %s", ref, err, string(out))
+						}
+						return nil
+					})
+				}
+
+				if err = group.Wait(); err != nil {
+					return err
+				}
 			}
 
-			group, ctx := errgroup.WithContext(ctx)
-			for _, ref := range refs {
-				group.Go(func() error {
-					args := []string{"push"}
-					if force {
-						args = append(args, "--force")
-					}
-					args = append(args, remote, ref)
-					cmd.logger.DebugContext(ctx, "git", "args", strings.Join(args, " "))
-					if out, err := runCmd(ctx, "", "git", args...); err != nil {
-						return fmt.Errorf("git push %s: %v: %s", ref, err, string(out))
-					}
-					return nil
-				})
-			}
-
-			if err = group.Wait(); err != nil {
-				return err
+			cmd.logger.InfoContext(ctx, "fetching", "remote", remote, "force", force)
+			args := []string{"fetch", remote, "+refs/notes/gb/*:refs/notes/gb/*"}
+			cmd.logger.DebugContext(ctx, "git", "args", strings.Join(args, " "))
+			if out, err := runCmd(ctx, "", "git", args...); err != nil {
+				return fmt.Errorf("git fetch notes: %v: %s", err, string(out))
 			}
 
 			cmd.logger.InfoContext(ctx, "sync complete", "remote", remote)
