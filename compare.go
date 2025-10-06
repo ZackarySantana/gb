@@ -13,13 +13,17 @@ func (cmd *cmd) Compare() *cli.Command {
 		Name:  "compare",
 		Usage: "Compare stored notes for two refs",
 		Arguments: []cli.Argument{
-			&cli.StringArg{Name: "base", UsageText: "<git ref>", Value: "origin/main"},
+			&cli.StringArg{Name: "base", UsageText: "<git ref>", Value: "HEAD~1"},
 			&cli.StringArg{Name: "head", UsageText: "<git ref>", Value: "HEAD"},
+		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "create", Aliases: []string{"c"}, Usage: "creates notes if missing (runs benchmarks)"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			notesRef := c.String("notes-ref")
 			baseRef := c.StringArg("base")
 			headRef := c.StringArg("head")
+			create := c.Bool("create")
 
 			if baseRef == "" || headRef == "" {
 				return errors.New("missing required arguments: base and/or head")
@@ -38,14 +42,37 @@ func (cmd *cmd) Compare() *cli.Command {
 				"notes_ref", notesRef, "base_ref", baseRef, "base", baseSHA, "head_ref", headRef, "head", headSHA,
 			)
 
-			// TODO: There should be a flag to just load benchmark + save the notes, and then compare.
 			baseNote, err := loadNote(ctx, notesRef, baseSHA)
 			if err != nil {
-				return fmt.Errorf("load base note: %w", err)
+				if !errors.Is(err, errNoteMissing) || !create {
+					return fmt.Errorf("load base note: %w", err)
+				}
+
+				cmd.logger.InfoContext(ctx, "base note missing, creating", "commit", baseSHA)
+				benchmarkArgs := benchmarkCommand(c.String("pkgs"), c.String("bench"), c.String("benchtime"), c.Int("count"))
+				if _, err = cmd.benchmark(ctx, notesRef, baseSHA, benchmarkArgs, false); err != nil {
+					return fmt.Errorf("create base note: %w", err)
+				}
+				baseNote, err = loadNote(ctx, notesRef, baseSHA)
+				if err != nil {
+					return fmt.Errorf("load created base note: %w", err)
+				}
 			}
 			headNote, err := loadNote(ctx, notesRef, headSHA)
 			if err != nil {
-				return fmt.Errorf("load head note: %w", err)
+				if !errors.Is(err, errNoteMissing) || !create {
+					return fmt.Errorf("load head note: %w", err)
+				}
+
+				cmd.logger.InfoContext(ctx, "head note missing, creating", "commit", headSHA)
+				benchmarkArgs := benchmarkCommand(c.String("pkgs"), c.String("bench"), c.String("benchtime"), c.Int("count"))
+				if _, err = cmd.benchmark(ctx, notesRef, headSHA, benchmarkArgs, false); err != nil {
+					return fmt.Errorf("create head note: %w", err)
+				}
+				baseNote, err = loadNote(ctx, notesRef, headSHA)
+				if err != nil {
+					return fmt.Errorf("load created head note: %w", err)
+				}
 			}
 
 			baseBenches := benchesByName(baseNote.Parsed.Benches)
