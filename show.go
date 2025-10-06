@@ -14,7 +14,7 @@ func (cmd *cmd) Show() *cli.Command {
 		Usage:     "Show stored note for a commit/ref",
 		Arguments: []cli.Argument{&cli.StringArg{Name: "ref", UsageText: "<git ref>"}},
 		Flags: []cli.Flag{
-			&cli.BoolFlag{Name: "all", Aliases: []string{"a"}, Usage: "show all notes (not just the one targetted by 'notes-ref')"},
+			&cli.BoolFlag{Name: "all", Aliases: []string{"a"}, Usage: "show all notes (not just the one targeted by 'notes-ref')"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			notesRef := getNotesRef(c)
