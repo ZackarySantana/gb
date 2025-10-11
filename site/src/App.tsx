@@ -1,6 +1,7 @@
 import { createEffect, For, Suspense, type Component } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createCommit";
+import ThemeSwitcher from "./components/ThemeSwitch";
 
 const App: Component = () => {
     const manifest = createManifest();
@@ -8,12 +9,40 @@ const App: Component = () => {
     return (
         <div>
             <h1>Benchmark Manifest</h1>
+            <Card />
+            <ThemeSwitcher />
             <For each={manifest()?.commits ?? []}>
                 {(commit) => <Commit commit={commit} />}
             </For>
         </div>
     );
 };
+
+export function Card() {
+    return (
+        <div class="rounded-xl p-6 bg-surface text-fg">
+            <h2 class="text-xl font-semibold">Hello!</h2>
+            <p class="text-muted">Welcome to my site.</p>
+
+            <div class="mt-4 flex gap-2">
+                <button class="px-3 py-2 rounded bg-button text-button-fg">
+                    Action
+                </button>
+                <div class="px-3 py-2 rounded border border-border">
+                    Bordered
+                </div>
+            </div>
+
+            <div class="mt-6 h-2 w-full bg-gradient-to-r from-grad-from to-grad-to" />
+
+            <div class="mt-6 rounded-lg p-4 bg-surface">
+                <a class="text-link" href="#">
+                    @zack
+                </a>
+            </div>
+        </div>
+    );
+}
 
 const Commit: Component<{ commit: { hash: string; note_refs: string[] } }> = (
     props

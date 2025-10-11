@@ -1,1 +1,183 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+/* Default theme: Midnight (high-contrast tuned) */
+@theme {
+    /* Text */
+    --color-primary: #e6edf3; /* ↑ a bit brighter than before */
+    --color-secondary: #a6b2c6; /* clearer than old slate-400 on dark */
+    --color-link: #b6c2d6; /* distinct from body */
+    --color-on-button: #ffffff; /* text on buttons */
+    --color-on-accent: #0a0a0a; /* text on accent surfaces */
+
+    /* Background hierarchy */
+    --color-background: #0b1220; /* slightly darker than before */
+    --color-surface: #131a29; /* +6–8 L* over background for clear step */
+    --color-elevated: #1c2436; /* another clear elevation step */
+    --color-button: #1f2e3e; /* distinct from surface */
+
+    /* Borders & accents */
+    --color-border: #475569; /* slate-600 (↑ from 700 for visibility) */
+    --color-border-strong: #5b6b7f; /* for dividers on noisy bg */
+    --color-accent: #ec4899; /* Pink-500 */
+    --color-accent-600: #db2777; /* hover/active */
+
+    /* Highlights / chips / progress */
+    --color-highlight-bg: #374151; /* gray-700 (↑ contrast) */
+    --color-highlight-fg: #ffffff;
+    --color-highlight-line: #f472b6; /* Pink-400 for lines on dark */
+
+    /* Gradients */
+    --color-grad-from: #be185d;
+    --color-grad-to: #ec4899;
+
+    /* Icons */
+    --color-icon-strong: #ffffff; /* stronger on dark UIs */
+    --color-icon-weak: #94a3b8;
+
+    /* Focus ring (visible on both bg & surface) */
+    --ring-color: #60a5fa; /* sky-400 */
+}
+
+/* ====================== THEMES ====================== */
+
+/* Blueish: keep dark neutrals, swap accent to blue & ensure on-accent read */
+:root[data-theme="Blueish"] {
+    --color-accent: #3b82f6; /* Blue-500 */
+    --color-accent-600: #2563eb; /* Blue-600 */
+    --color-highlight-line: #60a5fa; /* Blue-400 -> clearer on dark */
+    --color-grad-from: #1d4ed8; /* Blue-700 */
+    --color-grad-to: #3b82f6;
+    --color-on-accent: #0a0a0a; /* keep dark text on bright blue */
+}
+
+/* Ocean: slightly brighter text + clearer steps between surfaces */
+:root[data-theme="Ocean"] {
+    --color-primary: #eaf9f6;
+    --color-secondary: #cfe9e5;
+    --color-background: #222a2a; /* darker for contrast */
+    --color-surface: #2f3c41; /* distinct step */
+    --color-elevated: #3a4a50; /* second distinct step */
+    --color-button: #497480;
+    --color-border: #6a8e97; /* ↑ visibility */
+    --color-border-strong: #7da1aa;
+    --color-highlight-bg: #1f2937;
+    --color-highlight-line: #1b2c30;
+    --color-grad-from: #4b7e8b;
+    --color-grad-to: #4b7e8b;
+    --color-icon-strong: #ffffff;
+    --ring-color: #67e8f9; /* cyan-300 for visible focus */
+}
+
+/* Dracula: lighten body text, brighten surface/elevated ladder */
+:root[data-theme="Dracula"] {
+    --color-primary: #fafafa; /* ↑ from #f8f8f2 */
+    --color-secondary: #9aa3cf; /* lighter than #6272a4 for readability */
+    --color-link: #b6bdf0;
+
+    --color-background: #22232c; /* a bit darker for contrast */
+    --color-surface: #3c3f54; /* ↑ step from bg */
+    --color-elevated: #4b4f67; /* second step */
+    --color-button: #7682c2;
+
+    --color-border: #c5a8ff; /* brighter divider */
+    --color-border-strong: #d1b7ff;
+    --color-highlight-bg: #50fa7b;
+    --color-highlight-fg: #262a36;
+    --color-highlight-line: #bd93f9;
+
+    --color-accent: #bd93f9;
+    --color-accent-600: #9f7be4;
+    --color-grad-from: #bd93f9;
+    --color-grad-to: #bd93f9;
+
+    --color-icon-strong: #50fa7b;
+    --ring-color: #a78bfa; /* violet-400 */
+}
+
+/* Sunrise (light mode): deepen surface and border for separation */
+:root[data-theme="Sunrise"] {
+    --color-primary: #0a0a0a;
+    --color-secondary: #475569; /* slate-600 for legible secondary */
+    --color-link: #1f2937;
+
+    --color-background: #ffffff;
+    --color-surface: #f1f5f9; /* slate-100 (↑ separation) */
+    --color-elevated: #e5e7eb; /* slate-200 */
+    --color-button: #e23a4d;
+
+    --color-border: #cbd5e1; /* slate-300 */
+    --color-border-strong: #94a3b8; /* slate-400 */
+
+    --color-highlight-bg: #fde2e4; /* soft chip */
+    --color-highlight-fg: #7a1020;
+    --color-highlight-line: #e23a4d;
+
+    --color-accent: #e23a4d;
+    --color-accent-600: #c51f36;
+    --color-on-accent: #ffffff;
+
+    --color-grad-from: #e23a4d;
+    --color-grad-to: #f87171;
+
+    --color-icon-strong: #e23a4d;
+    --color-icon-weak: #475569;
+    --ring-color: #2563eb; /* blue-600 for crisp focus */
+}
+
+/* Inferno: ensure red UI still readable */
+:root[data-theme="Inferno"] {
+    --color-primary: #ffffff;
+    --color-secondary: #fca5a5; /* red-300 (lighter than red-500) */
+    --color-link: #f87171; /* red-400 (clearer) */
+
+    --color-background: #000000;
+    --color-surface: #121212; /* ↑ from #111 for clarity */
+    --color-elevated: #1c1c1c;
+    --color-button: #a31212;
+
+    --color-border: #ef4444; /* red-500 for visibility */
+    --color-border-strong: #f87171;
+
+    --color-highlight-bg: #3d0000;
+    --color-highlight-fg: #ffffff;
+    --color-highlight-line: #ff4d4d;
+
+    --color-accent: #ff3b30; /* slightly orange-ish red for pop */
+    --color-accent-600: #e22b21;
+    --color-on-accent: #0a0a0a;
+
+    --color-grad-from: #7f1010;
+    --color-grad-to: #a31212;
+
+    --color-icon-strong: #ffffff;
+    --ring-color: #60a5fa; /* visible blue ring on red UI */
+}
+
+/* Mongo: deepen background, lighten surface, brighten borders */
+:root[data-theme="Mongo"] {
+    --color-primary: #efeedd;
+    --color-secondary: #d8d7c7;
+    --color-link: #efeedd;
+
+    --color-background: #323136; /* darker for contrast */
+    --color-surface: #46ab3f; /* brighter card green */
+    --color-elevated: #58b94f; /* step above surface for cards/menus */
+    --color-button: #3fa037;
+
+    --color-border: #7ddc6e; /* bright border for separation */
+    --color-border-strong: #98e68a;
+
+    --color-highlight-bg: #4db33d;
+    --color-highlight-fg: #0f1a0f;
+    --color-highlight-line: #7ddc6e;
+
+    --color-accent: #66d463;
+    --color-accent-600: #4ab84a;
+    --color-on-accent: #0a0a0a;
+
+    --color-grad-from: #4db33d;
+    --color-grad-to: #7ddc6e;
+
+    --color-icon-strong: #efeedd;
+    --ring-color: #22d3ee; /* cyan-400 */
+}
