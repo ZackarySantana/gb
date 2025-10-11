@@ -1,9 +1,108 @@
-import type { Component } from 'solid-js';
+import { createEffect, For, Suspense, type Component } from "solid-js";
+import { createManifest } from "./primitives/createManifest";
+import { createNote } from "./primitives/createCommit";
 
 const App: Component = () => {
-  return (
-    <p class="text-4xl text-green-700 text-center py-20">Hello tailwind!</p>
-  );
+    const manifest = createManifest();
+
+    return (
+        <div>
+            <h1>Benchmark Manifest</h1>
+            <For each={manifest()?.commits ?? []}>
+                {(commit) => <Commit commit={commit} />}
+            </For>
+        </div>
+    );
+};
+
+const Commit: Component<{ commit: { hash: string; note_refs: string[] } }> = (
+    props
+) => {
+    return (
+        <div>
+            <h2>Commit: {props.commit.hash}</h2>
+            <ul>
+                <For each={props.commit.note_refs}>
+                    {(note) => (
+                        <Note commit={props.commit.hash} noteRef={note} />
+                    )}
+                </For>
+            </ul>
+        </div>
+    );
+};
+
+const Note: Component<{ commit: string; noteRef: string }> = (props) => {
+    const note = createNote(props.commit, props.noteRef);
+
+    createEffect(() => {
+        console.log("Loaded note:", note());
+    });
+
+    return (
+        <li>
+            <Suspense fallback={<span>Loading note {props.noteRef}...</span>}>
+                <div>
+                    <strong>Note: {props.noteRef}</strong>
+                    <div>Created at: {note()?.created_at}</div>
+                    <div>Go version: {note()?.env.go_version}</div>
+                    <div>Host: {note()?.env.host}</div>
+                    <div>Benches:</div>
+                    <ul>
+                        <For each={note()?.parsed.benches ?? []}>
+                            {(bench) => (
+                                <li>
+                                    <strong>{bench.name}</strong>
+                                    <ul>
+                                        <li>
+                                            Count: {bench.stats.count}, Ns/op
+                                            Mean:{" "}
+                                            {bench.stats.ns_per_op_mean.toFixed(
+                                                2
+                                            )}
+                                            , Ns/op Median:{" "}
+                                            {bench.stats.ns_per_op_median.toFixed(
+                                                2
+                                            )}
+                                            , Ns/op Min:{" "}
+                                            {bench.stats.ns_per_op_min.toFixed(
+                                                2
+                                            )}
+                                            , Ns/op Max:{" "}
+                                            {bench.stats.ns_per_op_max.toFixed(
+                                                2
+                                            )}
+                                            {bench.stats.bytes_per_op_mean !==
+                                                undefined && (
+                                                <>
+                                                    , Bytes/op Mean:{" "}
+                                                    {bench.stats.bytes_per_op_mean.toFixed(
+                                                        2
+                                                    )}
+                                                    , Bytes/op Median:{" "}
+                                                    {/* {bench.stats.bytes_per_op_median.toFixed(
+                                                                2
+                                                            )}
+                                                            , Bytes/op Min:{" "}
+                                                            {bench.stats.bytes_per_op_min.toFixed(
+                                                                2
+                                                            )}
+                                                            , Bytes/op Max:{" "}
+                                                            {bench.stats.bytes_per_op_max.toFixed(
+                                                                2
+                                                            )} */}
+                                                </>
+                                            )}
+                                        </li>
+                                    </ul>
+                                </li>
+                            )}
+                        </For>
+                    </ul>
+                </div>
+            </Suspense>
+        </li>
+    );
 };
 
 export default App;
