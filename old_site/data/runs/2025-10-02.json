@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "commit": "c7d8e9f0123456789012345678901234567890abc",
+  "created_at": "2025-10-02T09:15:00Z",
+  "env": {
+    "go_version": "go1.23.1",
+    "goos": "linux",
+    "goarch": "amd64",
+    "gomaxprocs": 8,
+    "host": "benchmark-server-01",
+    "cpus": 8
+  },
+  "bench_args": [
+    "go",
+    "test",
+    "./...",
+    "-run=^$",
+    "-bench",
+    "Bind",
+    "-benchmem",
+    "-count",
+    "3"
+  ],
+  "parsed": {
+    "goos": "linux",
+    "goarch": "amd64",
+    "pkg": "github.com/ZackarySantana/bind",
+    "pass": true,
+    "duration": "2.678s",
+    "benches": [
+      {
+        "name": "Bind/SmallStruct",
+        "samples": [
+          {
+            "iterations": 1428571,
+            "ns_per_op": 86.8,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          },
+          {
+            "iterations": 1428571,
+            "ns_per_op": 86.5,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          },
+          {
+            "iterations": 1428571,
+            "ns_per_op": 87.1,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          }
+        ],
+        "stats": {
+          "count": 3,
+          "ns_per_op_mean": 86.8,
+          "ns_per_op_median": 86.8,
+          "ns_per_op_min": 86.5,
+          "ns_per_op_max": 87.1,
+          "bytes_per_op_mean": 0,
+          "bytes_per_op_median": 0,
+          "allocs_per_op_mean": 0,
+          "allocs_per_op_median": 0
+        }
+      },
+      {
+        "name": "Bind/MediumStruct",
+        "samples": [
+          {
+            "iterations": 416667,
+            "ns_per_op": 292.0,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          },
+          {
+            "iterations": 416667,
+            "ns_per_op": 291.6,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          },
+          {
+            "iterations": 416667,
+            "ns_per_op": 292.4,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          }
+        ],
+        "stats": {
+          "count": 3,
+          "ns_per_op_mean": 292.0,
+          "ns_per_op_median": 292.0,
+          "ns_per_op_min": 291.6,
+          "ns_per_op_max": 292.4,
+          "bytes_per_op_mean": 0,
+          "bytes_per_op_median": 0,
+          "allocs_per_op_mean": 0,
+          "allocs_per_op_median": 0
+        }
+      },
+      {
+        "name": "Bind/LargeStruct",
+        "samples": [
+          {
+            "iterations": 120481,
+            "ns_per_op": 945.0,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          },
+          {
+            "iterations": 120481,
+            "ns_per_op": 944.2,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          },
+          {
+            "iterations": 120481,
+            "ns_per_op": 945.8,
+            "bytes_per_op": 0,
+            "allocs_per_op": 0
+          }
+        ],
+        "stats": {
+          "count": 3,
+          "ns_per_op_mean": 945.0,
+          "ns_per_op_median": 945.0,
+          "ns_per_op_min": 944.2,
+          "ns_per_op_max": 945.8,
+          "bytes_per_op_mean": 0,
+          "bytes_per_op_median": 0,
+          "allocs_per_op_mean": 0,
+          "allocs_per_op_median": 0
+        }
+      }
+    ]
+  },
+  "raw": "goos: linux\ngoarch: amd64\npkg: github.com/ZackarySantana/bind\ncpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz\nBenchmarkBind/SmallStruct-8         1428571               86.8 ns/op\nBenchmarkBind/SmallStruct-8         1428571               86.5 ns/op\nBenchmarkBind/SmallStruct-8         1428571               87.1 ns/op\nBenchmarkBind/MediumStruct-8         416667              292.0 ns/op\nBenchmarkBind/MediumStruct-8         416667              291.6 ns/op\nBenchmarkBind/MediumStruct-8         416667              292.4 ns/op\nBenchmarkBind/LargeStruct-8          120481              945.0 ns/op\nBenchmarkBind/LargeStruct-8          120481              944.2 ns/op\nBenchmarkBind/LargeStruct-8          120481              945.8 ns/op\nPASS\nok      github.com/ZackarySantana/bind    2.678s"
+}

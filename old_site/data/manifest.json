@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2025-10-06T14:00:00Z",
+  "defaultBaseline": "main",
+  "repo": "github.com/ZackarySantana/bind",
+  "package": "github.com/ZackarySantana/bind",
+  "runs": [
+    {
+      "id": "a1b2c3d4567890123456789012345678901234567",
+      "date": "2025-09-30",
+      "path": "runs/2025-09-30.json",
+      "count": 3
+    },
+    {
+      "id": "b4c5d6e5678901234567890123456789012345678",
+      "date": "2025-10-01",
+      "path": "runs/2025-10-01.json",
+      "count": 3
+    },
+    {
+      "id": "c7d8e9f0123456789012345678901234567890abc",
+      "date": "2025-10-02",
+      "path": "runs/2025-10-02.json",
+      "count": 3
+    },
+    {
+      "id": "d0e1f2a123456789012345678901234567890abcd",
+      "date": "2025-10-03",
+      "path": "runs/2025-10-03.json",
+      "count": 3
+    },
+    {
+      "id": "e3f4g5h234567890123456789012345678901abcde",
+      "date": "2025-10-04",
+      "path": "runs/2025-10-04.json",
+      "count": 3
+    },
+    {
+      "id": "f6g7h8i345678901234567890123456789012bcdef",
+      "date": "2025-10-05",
+      "path": "runs/2025-10-05.json",
+      "count": 3
+    },
+    {
+      "id": "g9h0i1j456789012345678901234567890123cdefg",
+      "date": "2025-10-06",
+      "path": "runs/2025-10-06.json",
+      "count": 3
+    }
+  ]
+}
