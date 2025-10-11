@@ -2,13 +2,30 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/urfave/cli/v3"
 	"golang.org/x/sync/errgroup"
 )
+
+type ManifestCommit struct {
+	Hash     string   `json:"hash"`
+	NoteRefs []string `json:"note_refs"`
+}
+
+type Manifest struct {
+	// Metadata information
+	GeneratedAt  time.Time `json:"generated_at"`
+	LatestCommit string    `json:"latest_commit"`
+	Module       string    `json:"module"`
+
+	// Commits are sorted by newest to oldest.
+	Commits []ManifestCommit `json:"commits"`
+}
 
 func (cmd *cmd) Export() *cli.Command {
 	return &cli.Command{
@@ -54,11 +71,18 @@ func (cmd *cmd) Export() *cli.Command {
 				cmd.logger.InfoContext(ctx, "no notes refs found, nothing to export")
 				return nil
 			}
-			type note struct {
+
+			manifest := &Manifest{
+				GeneratedAt:  time.Now().UTC(),
+				LatestCommit: commits[0],
+				Module:       "TODO-MODULE-NAME",
+			}
+
+			type noteInfo struct {
 				fileName string
 				value    []byte
 			}
-			ch := make(chan note, 10)
+			ch := make(chan noteInfo, 10)
 			group, errCtx := errgroup.WithContext(ctx)
 
 			group.Go(func() error {
@@ -81,31 +105,34 @@ func (cmd *cmd) Export() *cli.Command {
 				}
 			})
 
-			commitsWithoutNotes := 0
 			notesWrote := 0
 			for _, commit := range commits {
-				hasNote := false
+				var notes []string
 				for _, ref := range refs {
 					value, err := gitNotesShow(ctx, ref, commit)
 					if err != nil {
 						// This commit doesn't have this note ref, so we skip it.
 						continue
 					}
-					hasNote = true
 					select {
 					case <-ctx.Done():
 						close(ch)
 						group.Wait()
 						return ctx.Err()
-					case ch <- note{
-						fileName: fmt.Sprintf("%s/%s/%s.json", output, commit, ref),
-						value:    value,
+					case ch <- noteInfo{
+						fileName: filepath.Join(output, commit, ref+".json"),
+
+						value: value,
 					}:
+						notes = append(notes, ref)
 						notesWrote++
 					}
 				}
-				if !hasNote {
-					commitsWithoutNotes++
+				if len(notes) > 0 {
+					manifest.Commits = append(manifest.Commits, ManifestCommit{
+						Hash:     commit,
+						NoteRefs: notes,
+					})
 				}
 			}
 
@@ -114,6 +141,19 @@ func (cmd *cmd) Export() *cli.Command {
 				return fmt.Errorf("exporting notes: %w", err)
 			}
 
+			manifestPath := filepath.Join(output, "manifest.json")
+			if err := os.MkdirAll(filepath.Dir(manifestPath), 0o755); err != nil {
+				return fmt.Errorf("mkdir at %s: %w", filepath.Dir(manifestPath), err)
+			}
+			manifestJSON, err := json.MarshalIndent(manifest, "", "  ")
+			if err != nil {
+				return fmt.Errorf("marshaling manifest: %w", err)
+			}
+			if err := os.WriteFile(manifestPath, manifestJSON, 0o644); err != nil {
+				return fmt.Errorf("writing manifest at %s: %w", manifestPath, err)
+			}
+
+			commitsWithoutNotes := len(commits) - len(manifest.Commits)
 			cmd.logger.InfoContext(ctx, "export complete", "range", rangeSpec, "commits", len(commits), "notes", notesWrote, "commitsWithoutNotes", commitsWithoutNotes)
 			return nil
 		},
