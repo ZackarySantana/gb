@@ -115,11 +115,10 @@ func listAllNotesRefs(ctx context.Context) ([]string, error) {
 }
 
 func listAllNotesRefsForCommit(ctx context.Context, commit string) (map[string][]byte, error) {
-	out, err := runCmd(ctx, "", "git", "for-each-ref", "--format=%(refname)", "refs/notes")
+	lines, err := listAllNotesRefs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("git for-each-ref refs/notes: %w", err)
+		return nil, fmt.Errorf("listing notes refs: %w", err)
 	}
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 	notes := make(map[string][]byte)
 
 	for _, ref := range lines {
