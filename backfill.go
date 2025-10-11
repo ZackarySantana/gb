@@ -22,15 +22,20 @@ func (cmd *cmd) Backfill() *cli.Command {
 			&cli.BoolFlag{Name: "single", Usage: "single commit to benchmark (bypasses range)"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			notesRef := getNotesRef(c)
 			since := c.StringArg("since")
 			force := c.Bool("force")
 			single := c.Bool("single")
+
+			if since == "" {
+				return fmt.Errorf("missing required argument: since")
+			}
 
 			rangeSpec := since + "^..HEAD"
 			if single {
 				rangeSpec = since + "^.." + since
 			}
+
+			notesRef := getNotesRef(c)
 
 			cmd.logger.InfoContext(ctx, "backfill start", "notes_ref", notesRef, "range", rangeSpec)
 
