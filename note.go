@@ -242,8 +242,12 @@ type BenchStats struct {
 	// Memory & allocs (use -benchmem to populate)
 	BytesPerOpMean    float64 `json:"bytes_per_op_mean,omitempty"`
 	BytesPerOpMedian  float64 `json:"bytes_per_op_median,omitempty"`
+	BytesPerOpMin     float64 `json:"bytes_per_op_min,omitempty"`
+	BytesPerOpMax     float64 `json:"bytes_per_op_max,omitempty"`
 	AllocsPerOpMean   float64 `json:"allocs_per_op_mean,omitempty"`
 	AllocsPerOpMedian float64 `json:"allocs_per_op_median,omitempty"`
+	AllocsPerOpMin    float64 `json:"allocs_per_op_min,omitempty"`
+	AllocsPerOpMax    float64 `json:"allocs_per_op_max,omitempty"`
 }
 
 func computeBenchStats(samples []BenchSample) BenchStats {
@@ -261,7 +265,8 @@ func computeBenchStats(samples []BenchSample) BenchStats {
 
 	var bytesVals []float64
 	var allocsVals []float64
-	var bytesSum, allocsSum float64
+	var bytesMin, bytesMax, bytesSum float64
+	var allocsMin, allocsMax, allocsSum float64
 
 	for _, sm := range samples {
 		ns = append(ns, sm.NsPerOp)
@@ -276,11 +281,23 @@ func computeBenchStats(samples []BenchSample) BenchStats {
 			v := float64(sm.BytesPerOp)
 			bytesVals = append(bytesVals, v)
 			bytesSum += v
+			if bytesMin == 0 || v < bytesMin {
+				bytesMin = v
+			}
+			if v > bytesMax {
+				bytesMax = v
+			}
 		}
 		if sm.AllocsPerOp > 0 {
 			v := float64(sm.AllocsPerOp)
 			allocsVals = append(allocsVals, v)
 			allocsSum += v
+			if allocsMin == 0 || v < allocsMin {
+				allocsMin = v
+			}
+			if v > allocsMax {
+				allocsMax = v
+			}
 		}
 	}
 
@@ -299,6 +316,14 @@ func computeBenchStats(samples []BenchSample) BenchStats {
 		sort.Float64s(allocsVals)
 		s.AllocsPerOpMean = allocsSum / float64(len(allocsVals))
 		s.AllocsPerOpMedian = median(allocsVals)
+	}
+	if bytesMin > 0 {
+		s.BytesPerOpMin = bytesMin
+		s.BytesPerOpMax = bytesMax
+	}
+	if allocsMin > 0 {
+		s.AllocsPerOpMin = allocsMin
+		s.AllocsPerOpMax = allocsMax
 	}
 	return s
 }
