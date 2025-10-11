@@ -4,7 +4,6 @@ import type { Manifest } from "../lib/data";
 interface LayoutProps {
     children: JSX.Element;
     manifest?: Manifest;
-    onHomeClick?: () => void;
 }
 
 export default function Layout(props: LayoutProps) {
@@ -13,9 +12,9 @@ export default function Layout(props: LayoutProps) {
             <header class="header">
                 <div class="header-content">
                     <div class="header-left">
-                        <button onClick={props.onHomeClick} class="title-link">
+                        <a href="/" class="title-link">
                             <h1 class="title">gb • benchmarks</h1>
-                        </button>
+                        </a>
                         <Show when={props.manifest}>
                             {(manifest) => (
                                 <a 

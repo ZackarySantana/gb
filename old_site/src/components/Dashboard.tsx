@@ -1,5 +1,5 @@
 import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
-import { useSearchParams, useParams, useLocation } from "@solidjs/router";
+import { useSearchParams, useParams } from "@solidjs/router";
 import { loadManifest, loadNote, loadRun, noteToRunFile, type Manifest, type Note, type RunFile } from "../lib/data";
 import RunSummary from "./RunSummary";
 import Trend from "./Trend";
@@ -7,7 +7,6 @@ import Trend from "./Trend";
 export default function Dashboard() {
     const [searchParams, setSearchParams] = useSearchParams();
     const params = useParams();
-    const location = useLocation();
     
     // Load manifest
     const [manifest] = createResource<Manifest>(loadManifest);
@@ -26,15 +25,6 @@ export default function Dashboard() {
     const [commitId, setCommitId] = createSignal(initialCommit);
     const [benchName, setBenchName] = createSignal(initialBenchmark);
     const [metric, setMetric] = createSignal(initialMetric);
-    
-    // Reset state when navigating to home page
-    createEffect(() => {
-        if (location.pathname === "/") {
-            setCommitId("");
-            setBenchName("");
-            setMetric("");
-        }
-    });
     
     // Update URL when state changes
     createEffect(() => {
