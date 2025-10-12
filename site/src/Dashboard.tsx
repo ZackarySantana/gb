@@ -1,20 +1,19 @@
 import { For, Suspense, type Component } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createNote";
-import { Layout } from "./views/Layout";
 
 const Dashboard: Component = () => {
     const manifest = createManifest();
 
     return (
-        <Layout>
+        <>
             <For each={manifest()?.benchmarks ?? []}>
                 {(bench) => <div>Benchmark: {bench.name}</div>}
             </For>
             <For each={manifest()?.commits ?? []}>
                 {(commit) => <Commit commit={commit} />}
             </For>
-        </Layout>
+        </>
     );
 };
 

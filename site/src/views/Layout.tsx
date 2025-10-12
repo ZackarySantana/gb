@@ -1,9 +1,9 @@
 import { Component, JSX } from "solid-js";
 import { createManifest } from "../primitives/createManifest";
-import { A } from "@solidjs/router";
+import { A, RouteSectionProps } from "@solidjs/router";
 import ThemeSwitcher from "../components/ThemeSwitch";
 
-export const Layout: Component<{ children: JSX.Element }> = (props) => {
+export const Layout: Component<RouteSectionProps> = (props) => {
     return (
         <>
             <Header />

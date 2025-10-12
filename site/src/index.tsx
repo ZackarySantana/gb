@@ -7,6 +7,7 @@ import "solid-devtools";
 import { initTheme } from "./lib/theme";
 import Dashboard from "./Dashboard";
 import NotFound from "./404";
+import { Layout } from "./views/Layout";
 
 const root = document.getElementById("root");
 
@@ -20,7 +21,7 @@ initTheme();
 
 render(
     () => (
-        <Router>
+        <Router root={Layout}>
             <Route path="/" component={Dashboard} />
             <Route path="*" component={NotFound} />
         </Router>
