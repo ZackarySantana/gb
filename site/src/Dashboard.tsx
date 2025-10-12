@@ -1,23 +1,57 @@
-import { For, Suspense, type Component } from "solid-js";
+import { For, onMount, Suspense, type Component } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createNote";
+import { Benchmark } from "./lib/data";
+import { createBenchmark } from "./primitives/createBenchmark";
+import { A } from "@solidjs/router";
 
 const Dashboard: Component = () => {
     const manifest = createManifest();
 
     return (
-        <>
-            <For each={manifest()?.benchmarks ?? []}>
-                {(bench) => <div>Benchmark: {bench.name}</div>}
-            </For>
+        <div class="py-8">
+            <div class="flex gap-5 flex-col">
+                <For each={manifest()?.benchmarks ?? []}>
+                    {(bench) => (
+                        <BenchmarkCommit
+                            name={bench.name}
+                            commits={bench.commits}
+                        />
+                    )}
+                </For>
+            </div>
             <For each={manifest()?.commits ?? []}>
                 {(commit) => <Commit commit={commit} />}
             </For>
-        </>
+        </div>
     );
 };
 
-export function Card() {
+function BenchmarkCommit(props: { name: string; commits: string[] }) {
+    const allResults = props.commits.map((c) => createBenchmark(props.name, c));
+
+    let el!: HTMLDivElement;
+
+    return (
+        <div class="bg-bg-surface text-text-primary border border-border rounded-lg p-5">
+            <div class="flex gap-5 items-center">
+                <h2 class="text-xl font-semibold">{props.name}</h2>
+                <A
+                    href="/"
+                    class="bg-bg-elevated text-text-link hover:text-accent py-2 px-2 rounded-lg ml-auto text-sm font-mono transition"
+                >
+                    41rjf0
+                </A>
+                <button class="px-4 py-2 text-sm rounded-md bg-btn-secondary text-on-btn-secondary hover:bg-btn-secondary-hover transition cursor-pointer">
+                    More Info
+                </button>
+            </div>
+            <div ref={el} />
+        </div>
+    );
+}
+
+function Card() {
     return (
         <div class="rounded-xl p-6 bg-bg-surface text-text-primary shadow-sm">
             <h2 class="text-xl font-semibold">Hello!</h2>
@@ -35,7 +69,7 @@ export function Card() {
             <div class="mt-6 h-1 w-full rounded-full bg-gradient-to-r from-grad-from to-grad-to" />
 
             <div class="mt-6 rounded-lg p-4 bg-elevated border border-border">
-                <a href="#" class="text-link hover:text-accent transition">
+                <a href="#" class="text-text-link hover:text-accent transition">
                     @zack
                 </a>
             </div>
