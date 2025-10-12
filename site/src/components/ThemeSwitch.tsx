@@ -8,6 +8,9 @@ export default function ThemeSwitcher(props: { class?: string }) {
                 onInput={(e) =>
                     setTheme((e.target as HTMLSelectElement).value as ThemeName)
                 }
+                value={
+                    document.documentElement.getAttribute("data-theme") || ""
+                }
             >
                 {THEMES.map((t) => (
                     <option value={t}>{t}</option>
