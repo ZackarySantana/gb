@@ -1,6 +1,6 @@
 import { For, Suspense, type Component } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
-import { createNote } from "./primitives/createCommit";
+import { createNote } from "./primitives/createNote";
 import { Layout } from "./views/Layout";
 
 const Dashboard: Component = () => {
@@ -17,16 +17,6 @@ const Dashboard: Component = () => {
         </Layout>
     );
 };
-
-function Raw() {
-    const manifest = createManifest();
-
-    return (
-        <For each={manifest()?.commits ?? []}>
-            {(commit) => <Commit commit={commit} />}
-        </For>
-    );
-}
 
 export function Card() {
     return (

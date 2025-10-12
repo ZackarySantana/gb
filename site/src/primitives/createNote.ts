@@ -6,5 +6,5 @@ export function createNote(
     commit: string,
     ref: string
 ): Accessor<Note | undefined> {
-    return createAsync<Note>(() => getNote(commit, ref));
+    return createAsync(() => getNote(commit, ref));
 }
