@@ -30,7 +30,9 @@ function Header() {
                     href={`https://${manifest()?.module ?? "github.com"}`}
                     class="text-xs text-text-secondary font-mono hover:text-accent-hover transition-all"
                 >
-                    {manifest()?.module ?? "unknown module"}
+                    {manifest()
+                        ? manifest()?.module ?? "unknown module"
+                        : "loading..."}
                 </A>
             </div>
             <ThemeSwitcher class="ml-auto text-xs" />
