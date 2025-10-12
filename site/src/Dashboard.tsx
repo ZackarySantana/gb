@@ -6,10 +6,11 @@ import { Layout } from "./views/Layout";
 const Dashboard: Component = () => {
     const manifest = createManifest();
 
-    // we have to change the manifest to be by benchmarks
-
     return (
         <Layout>
+            <For each={manifest()?.benchmarks ?? []}>
+                {(bench) => <div>Benchmark: {bench.name}</div>}
+            </For>
             <For each={manifest()?.commits ?? []}>
                 {(commit) => <Commit commit={commit} />}
             </For>
