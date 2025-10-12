@@ -15,7 +15,8 @@ export const Layout: Component<{ children: JSX.Element }> = (props) => {
 function Header() {
     const manifest = createManifest();
 
-    const parsedDate = () => new Date(manifest()?.generated_at ?? Date.now());
+    const parsedDate = () =>
+        new Date(manifest()?.generated_at ?? Date.now()).toString();
 
     return (
         <nav class="w-full sticky py-4 px-16 bg-bg-surface border-b border-border flex justify-between items-center gap-6 top-0 z-10">
@@ -36,7 +37,9 @@ function Header() {
                 </A>
             </div>
             <ThemeSwitcher class="ml-auto text-xs" />
-            <p class="text-xs text-text-secondary">{parsedDate().toString()}</p>
+            <p class="text-xs text-text-secondary">
+                {manifest() ? parsedDate() : "loading..."}
+            </p>
         </nav>
     );
 }
