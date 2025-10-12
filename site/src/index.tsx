@@ -6,6 +6,7 @@ import "solid-devtools";
 
 import { initTheme } from "./lib/theme";
 import Dashboard from "./Dashboard";
+import NotFound from "./404";
 
 const root = document.getElementById("root");
 
@@ -21,6 +22,7 @@ render(
     () => (
         <Router>
             <Route path="/" component={Dashboard} />
+            <Route path="*" component={NotFound} />
         </Router>
     ),
     root!
