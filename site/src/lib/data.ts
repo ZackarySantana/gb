@@ -17,6 +17,7 @@ export type Manifest = {
 export const getManifest = query(async () => {
     const res = await fetch("./data/manifest.json");
     if (!res.ok) throw new Error(`manifest load failed: ${res.status}`);
+    await new Promise((r) => setTimeout(r, 1000));
     return res.json() as Promise<Manifest>;
 }, "manifest");
 
@@ -69,8 +70,7 @@ export type Note = {
 export const getNote = query(async (commit: string, ref: string) => {
     const res = await fetch(`./data/commits/${commit}/${ref}.json`);
     if (!res.ok) throw new Error(`note load failed: ${res.status}`);
-    // sleep for 2s to simulate loading
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 1000));
     return res.json() as Promise<Note>;
 }, "note");
 
