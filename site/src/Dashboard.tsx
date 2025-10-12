@@ -4,6 +4,7 @@ import { createNote } from "./primitives/createNote";
 import { Benchmark } from "./lib/data";
 import { createBenchmark } from "./primitives/createBenchmark";
 import { A } from "@solidjs/router";
+import GitHash from "./components/GitHash";
 
 const Dashboard: Component = () => {
     const manifest = createManifest();
@@ -36,12 +37,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
         <div class="bg-bg-surface text-text-primary border border-border rounded-lg p-5">
             <div class="flex gap-5 items-center">
                 <h2 class="text-xl font-semibold">{props.name}</h2>
-                <A
-                    href="/"
-                    class="bg-bg-elevated text-text-link hover:text-accent py-2 px-2 rounded-lg ml-auto text-sm font-mono transition"
-                >
-                    41rjf0
-                </A>
+                <GitHash hash="3e54998c31898cfc67006f7440ccb5917f8681a6" />
                 <button class="px-4 py-2 text-sm rounded-md bg-btn-secondary text-on-btn-secondary hover:bg-btn-secondary-hover transition cursor-pointer">
                     More Info
                 </button>
