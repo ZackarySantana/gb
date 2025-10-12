@@ -1,183 +1,232 @@
 @import "tailwindcss";
 
-/* Default theme: Midnight (high-contrast tuned) */
+/* Default Theme: Midnight */
 @theme {
-    /* Text */
-    --color-primary: #e6edf3; /* ↑ a bit brighter than before */
-    --color-secondary: #a6b2c6; /* clearer than old slate-400 on dark */
-    --color-link: #b6c2d6; /* distinct from body */
-    --color-on-button: #ffffff; /* text on buttons */
-    --color-on-accent: #0a0a0a; /* text on accent surfaces */
+    --color-bg-app: #0d1117;
+    --color-bg-surface: #161b22;
+    --color-bg-elevated: #1c2128;
+    --color-bg-overlay: rgba(0, 0, 0, 0.6);
 
-    /* Background hierarchy */
-    --color-background: #0b1220; /* slightly darker than before */
-    --color-surface: #131a29; /* +6–8 L* over background for clear step */
-    --color-elevated: #1c2436; /* another clear elevation step */
-    --color-button: #1f2e3e; /* distinct from surface */
+    --color-text-primary: #c9d1d9;
+    --color-text-secondary: #8b949e;
+    --color-text-link: #58a6ff;
 
-    /* Borders & accents */
-    --color-border: #475569; /* slate-600 (↑ from 700 for visibility) */
-    --color-border-strong: #5b6b7f; /* for dividers on noisy bg */
-    --color-accent: #ec4899; /* Pink-500 */
-    --color-accent-600: #db2777; /* hover/active */
+    --color-border: #30363d;
+    --color-border-strong: #484f58;
+    --color-ring: #1f6feb;
 
-    /* Highlights / chips / progress */
-    --color-highlight-bg: #374151; /* gray-700 (↑ contrast) */
-    --color-highlight-fg: #ffffff;
-    --color-highlight-line: #f472b6; /* Pink-400 for lines on dark */
-
-    /* Gradients */
-    --color-grad-from: #be185d;
-    --color-grad-to: #ec4899;
-
-    /* Icons */
-    --color-icon-strong: #ffffff; /* stronger on dark UIs */
-    --color-icon-weak: #94a3b8;
-
-    /* Focus ring (visible on both bg & surface) */
-    --ring-color: #60a5fa; /* sky-400 */
-}
-
-/* ====================== THEMES ====================== */
-
-/* Blueish: keep dark neutrals, swap accent to blue & ensure on-accent read */
-:root[data-theme="Blueish"] {
-    --color-accent: #3b82f6; /* Blue-500 */
-    --color-accent-600: #2563eb; /* Blue-600 */
-    --color-highlight-line: #60a5fa; /* Blue-400 -> clearer on dark */
-    --color-grad-from: #1d4ed8; /* Blue-700 */
-    --color-grad-to: #3b82f6;
-    --color-on-accent: #0a0a0a; /* keep dark text on bright blue */
-}
-
-/* Ocean: slightly brighter text + clearer steps between surfaces */
-:root[data-theme="Ocean"] {
-    --color-primary: #eaf9f6;
-    --color-secondary: #cfe9e5;
-    --color-background: #222a2a; /* darker for contrast */
-    --color-surface: #2f3c41; /* distinct step */
-    --color-elevated: #3a4a50; /* second distinct step */
-    --color-button: #497480;
-    --color-border: #6a8e97; /* ↑ visibility */
-    --color-border-strong: #7da1aa;
-    --color-highlight-bg: #1f2937;
-    --color-highlight-line: #1b2c30;
-    --color-grad-from: #4b7e8b;
-    --color-grad-to: #4b7e8b;
-    --color-icon-strong: #ffffff;
-    --ring-color: #67e8f9; /* cyan-300 for visible focus */
-}
-
-/* Dracula: lighten body text, brighten surface/elevated ladder */
-:root[data-theme="Dracula"] {
-    --color-primary: #fafafa; /* ↑ from #f8f8f2 */
-    --color-secondary: #9aa3cf; /* lighter than #6272a4 for readability */
-    --color-link: #b6bdf0;
-
-    --color-background: #22232c; /* a bit darker for contrast */
-    --color-surface: #3c3f54; /* ↑ step from bg */
-    --color-elevated: #4b4f67; /* second step */
-    --color-button: #7682c2;
-
-    --color-border: #c5a8ff; /* brighter divider */
-    --color-border-strong: #d1b7ff;
-    --color-highlight-bg: #50fa7b;
-    --color-highlight-fg: #262a36;
-    --color-highlight-line: #bd93f9;
-
-    --color-accent: #bd93f9;
-    --color-accent-600: #9f7be4;
-    --color-grad-from: #bd93f9;
-    --color-grad-to: #bd93f9;
-
-    --color-icon-strong: #50fa7b;
-    --ring-color: #a78bfa; /* violet-400 */
-}
-
-/* Sunrise (light mode): deepen surface and border for separation */
-:root[data-theme="Sunrise"] {
-    --color-primary: #0a0a0a;
-    --color-secondary: #475569; /* slate-600 for legible secondary */
-    --color-link: #1f2937;
-
-    --color-background: #ffffff;
-    --color-surface: #f1f5f9; /* slate-100 (↑ separation) */
-    --color-elevated: #e5e7eb; /* slate-200 */
-    --color-button: #e23a4d;
-
-    --color-border: #cbd5e1; /* slate-300 */
-    --color-border-strong: #94a3b8; /* slate-400 */
-
-    --color-highlight-bg: #fde2e4; /* soft chip */
-    --color-highlight-fg: #7a1020;
-    --color-highlight-line: #e23a4d;
-
-    --color-accent: #e23a4d;
-    --color-accent-600: #c51f36;
+    --color-accent: #238636;
+    --color-accent-hover: #2ea043;
     --color-on-accent: #ffffff;
 
-    --color-grad-from: #e23a4d;
-    --color-grad-to: #f87171;
+    --color-card-bg: var(--bg-surface);
+    --color-card-border: var(--border);
+    --color-chip-bg: #21262d;
+    --color-chip-fg: #ffffff;
+    --color-progress: #3fb950;
 
-    --color-icon-strong: #e23a4d;
-    --color-icon-weak: #475569;
-    --ring-color: #2563eb; /* blue-600 for crisp focus */
-}
+    --color-input-bg: #0d1117;
+    --color-input-fg: var(--text-primary);
+    --color-input-placeholder: #8b949e;
+    --color-input-border: var(--border);
+    --color-input-focus: var(--ring);
 
-/* Inferno: ensure red UI still readable */
-:root[data-theme="Inferno"] {
-    --color-primary: #ffffff;
-    --color-secondary: #fca5a5; /* red-300 (lighter than red-500) */
-    --color-link: #f87171; /* red-400 (clearer) */
+    --color-btn-primary: #238636;
+    --color-on-btn-primary: #ffffff;
+    --color-btn-primary-hover: #2ea043;
 
-    --color-background: #000000;
-    --color-surface: #121212; /* ↑ from #111 for clarity */
-    --color-elevated: #1c1c1c;
-    --color-button: #a31212;
+    --color-btn-secondary: #30363d;
+    --color-on-btn-secondary: #c9d1d9;
+    --color-btn-secondary-hover: #484f58;
 
-    --color-border: #ef4444; /* red-500 for visibility */
-    --color-border-strong: #f87171;
+    --color-btn-outline-fg: var(--text-primary);
+    --color-btn-outline-border: var(--border);
+    --color-btn-outline-hover: rgba(255, 255, 255, 0.06);
 
-    --color-highlight-bg: #3d0000;
-    --color-highlight-fg: #ffffff;
-    --color-highlight-line: #ff4d4d;
+    --color-btn-ghost-fg: var(--text-primary);
+    --color-btn-ghost-hover: rgba(255, 255, 255, 0.06);
 
-    --color-accent: #ff3b30; /* slightly orange-ish red for pop */
-    --color-accent-600: #e22b21;
-    --color-on-accent: #0a0a0a;
+    --color-btn-danger: #da3633;
+    --color-on-btn-danger: #ffffff;
+    --color-btn-danger-hover: #b62324;
 
-    --color-grad-from: #7f1010;
-    --color-grad-to: #a31212;
+    --color-btn-success: #3fb950;
+    --color-on-btn-success: #ffffff;
+    --color-btn-success-hover: #2ea043;
 
     --color-icon-strong: #ffffff;
-    --ring-color: #60a5fa; /* visible blue ring on red UI */
+    --color-icon-weak: #8b949e;
+    --color-grad-from: #3fb950;
+    --color-grad-to: #1f6feb;
 }
 
-/* Mongo: deepen background, lighten surface, brighten borders */
-:root[data-theme="Mongo"] {
-    --color-primary: #efeedd;
-    --color-secondary: #d8d7c7;
-    --color-link: #efeedd;
+:root {
+    color-scheme: dark;
+}
 
-    --color-background: #323136; /* darker for contrast */
-    --color-surface: #46ab3f; /* brighter card green */
-    --color-elevated: #58b94f; /* step above surface for cards/menus */
-    --color-button: #3fa037;
+:root[data-theme="Blueish"] {
+    --color-accent: #3b82f6;
+    --color-accent-hover: #2563eb;
+    --color-progress: #60a5fa;
+    --color-btn-primary: #3b82f6;
+    --color-on-btn-primary: #0a0a0a;
+    --color-btn-primary-hover: #2563eb;
+    --color-ring: #60a5fa;
+    --color-grad-from: #60a5fa;
+    --color-grad-to: #1d4ed8;
+}
 
-    --color-border: #7ddc6e; /* bright border for separation */
-    --color-border-strong: #98e68a;
-
-    --color-highlight-bg: #4db33d;
-    --color-highlight-fg: #0f1a0f;
-    --color-highlight-line: #7ddc6e;
-
-    --color-accent: #66d463;
-    --color-accent-600: #4ab84a;
+:root[data-theme="Ocean"] {
+    --color-bg-app: #222a2a;
+    --color-bg-surface: #2f3c41;
+    --color-bg-elevated: #3a4a50;
+    --color-text-primary: #eaf9f6;
+    --color-text-secondary: #cfe9e5;
+    --color-text-link: #cfe9e5;
+    --color-border: #6a8e97;
+    --color-border-strong: #7da1aa;
+    --color-accent: #4b7e8b;
+    --color-accent-hover: #3e6b76;
     --color-on-accent: #0a0a0a;
+    --color-chip-bg: #1f2937;
+    --color-chip-fg: #ffffff;
+    --color-progress: #1b2c30;
+    --color-input-bg: #29353a;
+    --color-input-placeholder: #9fb6bc;
+    --color-btn-primary: #4b7e8b;
+    --color-on-btn-primary: #0a0a0a;
+    --color-btn-primary-hover: #3e6b76;
+    --color-btn-secondary: #395b64;
+    --color-on-btn-secondary: #ffffff;
+    --color-btn-secondary-hover: #314e56;
+    --color-ring: #67e8f9;
+    --color-grad-from: #6eaab8;
+    --color-grad-to: #395b64;
+}
 
-    --color-grad-from: #4db33d;
-    --color-grad-to: #7ddc6e;
+:root[data-theme="Dracula"] {
+    --color-bg-app: #22232c;
+    --color-bg-surface: #3c3f54;
+    --color-bg-elevated: #4b4f67;
+    --color-text-primary: #fafafa;
+    --color-text-secondary: #9aa3cf;
+    --color-text-link: #b6bdf0;
+    --color-border: #c5a8ff;
+    --color-border-strong: #d1b7ff;
+    --color-accent: #bd93f9;
+    --color-accent-hover: #9f7be4;
+    --color-on-accent: #262a36;
+    --color-chip-bg: #50fa7b;
+    --color-chip-fg: #262a36;
+    --color-progress: #bd93f9;
+    --color-input-bg: #34364a;
+    --color-input-placeholder: #b4b9e0;
+    --color-btn-primary: #bd93f9;
+    --color-on-btn-primary: #262a36;
+    --color-btn-primary-hover: #a882ed;
+    --color-btn-secondary: #7682c2;
+    --color-on-btn-secondary: #0a0a0a;
+    --color-btn-secondary-hover: #6773b4;
+    --color-ring: #a78bfa;
+    --color-grad-from: #d4b7ff;
+    --color-grad-to: #8b5ee0;
+}
 
-    --color-icon-strong: #efeedd;
-    --ring-color: #22d3ee; /* cyan-400 */
+:root[data-theme="Sunrise"] {
+    color-scheme: light;
+    --color-bg-app: #ffffff;
+    --color-bg-surface: #f1f5f9;
+    --color-bg-elevated: #e5e7eb;
+    --color-text-primary: #0a0a0a;
+    --color-text-secondary: #475569;
+    --color-text-link: #1f2937;
+    --color-border: #cbd5e1;
+    --color-border-strong: #94a3b8;
+    --color-accent: #e23a4d;
+    --color-accent-hover: #c51f36;
+    --color-on-accent: #ffffff;
+    --color-chip-bg: #fde2e4;
+    --color-chip-fg: #7a1020;
+    --color-progress: #e23a4d;
+    --color-input-bg: #ffffff;
+    --color-input-fg: #0a0a0a;
+    --color-input-placeholder: #6b7280;
+    --color-input-border: #cbd5e1;
+    --color-input-focus: #2563eb;
+    --color-btn-primary: #e23a4d;
+    --color-on-btn-primary: #f9fafb;
+    --color-btn-primary-hover: #c51f36;
+    --color-btn-secondary: #111827;
+    --color-on-btn-secondary: #ffffff;
+    --color-btn-secondary-hover: #0b1220;
+    --color-btn-outline-fg: #0a0a0a;
+    --color-btn-outline-border: #cbd5e1;
+    --color-btn-outline-hover: rgba(2, 6, 23, 0.06);
+    --color-btn-ghost-fg: #0a0a0a;
+    --color-btn-ghost-hover: rgba(2, 6, 23, 0.06);
+    --color-btn-danger: #dc2626;
+    --color-on-btn-danger: #ffffff;
+    --color-btn-danger-hover: #b91c1c;
+    --color-btn-success: #16a34a;
+    --color-on-btn-success: #ffffff;
+    --color-btn-success-hover: #15803d;
+    --color-ring: #2563eb;
+    --color-grad-from: #f87171;
+    --color-grad-to: #b91c1c;
+}
+
+:root[data-theme="Inferno"] {
+    --color-bg-app: #000000;
+    --color-bg-surface: #121212;
+    --color-bg-elevated: #1c1c1c;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #fca5a5;
+    --color-text-link: #f87171;
+    --color-border: #ef4444;
+    --color-border-strong: #f87171;
+    --color-accent: #ff3b30;
+    --color-accent-hover: #e22b21;
+    --color-on-accent: #0a0a0a;
+    --color-chip-bg: #3d0000;
+    --color-chip-fg: #ffffff;
+    --color-progress: #ff4d4d;
+    --color-input-bg: #0f0f0f;
+    --color-input-placeholder: #f87171;
+    --color-btn-primary: #ff3b30;
+    --color-on-btn-primary: #fef2f2;
+    --color-btn-primary-hover: #e22b21;
+    --color-btn-secondary: #a31212;
+    --color-on-btn-secondary: #ffffff;
+    --color-btn-secondary-hover: #8d0e0e;
+    --color-ring: #60a5fa;
+    --color-grad-from: #ff9999;
+    --color-grad-to: #b91c1c;
+}
+
+:root[data-theme="Mongo"] {
+    --color-bg-app: #323136;
+    --color-bg-surface: #46ab3f;
+    --color-bg-elevated: #58b94f;
+    --color-text-primary: #efeedd;
+    --color-text-secondary: #d8d7c7;
+    --color-text-link: #efeedd;
+    --color-border: #7ddc6e;
+    --color-border-strong: #98e68a;
+    --color-accent: #66d463;
+    --color-accent-hover: #4ab84a;
+    --color-on-accent: #0a0a0a;
+    --color-chip-bg: #4db33d;
+    --color-chip-fg: #0f1a0f;
+    --color-progress: #7ddc6e;
+    --color-input-bg: #2c2b30;
+    --color-input-placeholder: #c8e8c6;
+    --color-btn-primary: #66d463;
+    --color-on-btn-primary: #f9fafb;
+    --color-btn-primary-hover: #4ab84a;
+    --color-btn-secondary: #3fa037;
+    --color-on-btn-secondary: #e8e7d5;
+    --color-btn-secondary-hover: #37912f;
+    --color-ring: #22d3ee;
+    --color-grad-from: #b0f5a6;
+    --color-grad-to: #37912f;
 }
