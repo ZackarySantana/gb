@@ -1,53 +1,29 @@
-import { createEffect, For, Suspense, type Component } from "solid-js";
+import { For, Suspense, type Component } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createCommit";
-import ThemeSwitcher from "./components/ThemeSwitch";
-import { A } from "@solidjs/router";
-import { Manifest } from "./lib/data";
+import { Layout } from "./views/Layout";
 
-const App: Component = () => {
+const Dashboard: Component = () => {
     const manifest = createManifest();
 
+    // we have to change the manifest to be by benchmarks
+
     return (
-        <div>
-            <Header manifest={manifest()} />
-            <h1>Benchmark Manifest</h1>
-            <Card />
-            <ThemeSwitcher />
+        <Layout>
             <For each={manifest()?.commits ?? []}>
                 {(commit) => <Commit commit={commit} />}
             </For>
-        </div>
+        </Layout>
     );
 };
 
-function Header(props: { manifest: Manifest | undefined }) {
-    // get generated at date
-    // parse string to date
-    const parsedDate = () =>
-        new Date(props.manifest?.generated_at ?? Date.now());
-
-    console.log("Parsed date:", parsedDate());
+function Raw() {
+    const manifest = createManifest();
 
     return (
-        <nav class="w-full sticky py-4 px-20 bg-bg-surface border-b border-border flex justify-between items-center gap-6">
-            <div>
-                <A
-                    href="/"
-                    class="text-2xl bg-gradient-to-r from-grad-from to-grad-to bg-clip-text text-transparent font-bold hover:bg-gradient-to-l block mb-1"
-                >
-                    go • benchmarks
-                </A>
-                <A
-                    href="https://github.com/zackarysantana/gb"
-                    class="text-xs text-text-secondary font-mono hover:text-accent-hover transition-all"
-                >
-                    {props.manifest?.module ?? "unknown module"}
-                </A>
-            </div>
-            <ThemeSwitcher class="ml-auto" />
-            <p class="text-xs text-text-secondary">{parsedDate().toString()}</p>
-        </nav>
+        <For each={manifest()?.commits ?? []}>
+            {(commit) => <Commit commit={commit} />}
+        </For>
     );
 }
 
@@ -96,10 +72,6 @@ const Commit: Component<{ commit: { hash: string; note_refs: string[] } }> = (
 
 const Note: Component<{ commit: string; noteRef: string }> = (props) => {
     const note = createNote(props.commit, props.noteRef);
-
-    createEffect(() => {
-        console.log("Loaded note:", note());
-    });
 
     return (
         <li>
@@ -167,4 +139,4 @@ const Note: Component<{ commit: string; noteRef: string }> = (props) => {
     );
 };
 
-export default App;
+export default Dashboard;

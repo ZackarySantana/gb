@@ -5,7 +5,7 @@ import { Route, Router } from "@solidjs/router";
 import "solid-devtools";
 
 import { initTheme } from "./lib/theme";
-import App from "./App";
+import Dashboard from "./Dashboard";
 
 const root = document.getElementById("root");
 
@@ -20,7 +20,7 @@ initTheme();
 render(
     () => (
         <Router>
-            <Route path="/" component={App} />
+            <Route path="/" component={Dashboard} />
         </Router>
     ),
     root!
