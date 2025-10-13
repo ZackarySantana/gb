@@ -1,10 +1,12 @@
-import { For, onMount, Suspense, type Component } from "solid-js";
+import { createEffect, For, onMount, Suspense, type Component } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createNote";
 import { Benchmark } from "./lib/data";
 import { createBenchmark } from "./primitives/createBenchmark";
 import { A } from "@solidjs/router";
 import GitHash from "./components/GitHash";
+import uPlot, { AlignedData } from "uplot";
+import { createProperty } from "./primitives/createProperty";
 
 const Dashboard: Component = () => {
     const manifest = createManifest();
@@ -31,17 +33,97 @@ const Dashboard: Component = () => {
 function BenchmarkCommit(props: { name: string; commits: string[] }) {
     const allResults = props.commits.map((c) => createBenchmark(props.name, c));
 
+    const data: () => AlignedData = () => [
+        [0, 5, 10],
+        [0, 10, 5],
+    ];
+
     let el!: HTMLDivElement;
+    let plot!: uPlot;
+
+    onMount(() => {
+        const accent = createProperty("--color-accent");
+        const accentHover = createProperty("--color-accent-hover");
+        const grid = createProperty("--color-bg-app");
+        const text = createProperty("--color-text-secondary");
+
+        plot = new uPlot(
+            {
+                title: props.name,
+                width: el.clientWidth,
+                height: 320,
+                pxAlign: 0,
+                select: {
+                    show: false,
+                    left: 0,
+                    top: 0,
+                    width: 0,
+                    height: 0,
+                },
+                scales: {
+                    x: { auto: true },
+                    y: { auto: true },
+                },
+                series: [
+                    {},
+                    {
+                        label: "value",
+                        width: 2,
+                        stroke: accent,
+                        points: {
+                            show: true,
+                            size: 6,
+                            width: 2,
+                            stroke: accentHover,
+                            fill: accent,
+                        },
+                    },
+                ],
+                axes: [
+                    {
+                        grid: {
+                            stroke: grid,
+                            width: 1,
+                        },
+                        ticks: {
+                            stroke: grid,
+                            width: 1,
+                        },
+                        font: "12px system-ui, -apple-system, sans-serif",
+                        stroke: text,
+                    },
+                    {
+                        grid: {
+                            stroke: grid,
+                            width: 1,
+                        },
+                        ticks: {
+                            stroke: grid,
+                            width: 1,
+                        },
+                        font: "12px system-ui, -apple-system, sans-serif",
+                        stroke: text,
+                    },
+                ],
+                legend: {
+                    show: false,
+                },
+            },
+            [],
+            el
+        );
+
+        document.addEventListener("theme-change", () => {
+            plot.redraw();
+        });
+    });
+
+    createEffect(() => {
+        plot.setData(data());
+    });
 
     return (
         <div class="bg-bg-surface text-text-primary border border-border rounded-lg p-5">
-            <div class="flex gap-5 items-center">
-                <h2 class="text-xl font-semibold">{props.name}</h2>
-                <GitHash hash="3e54998c31898cfc67006f7440ccb5917f8681a6" />
-                <button class="px-4 py-2 text-sm rounded-md bg-btn-secondary text-on-btn-secondary hover:bg-btn-secondary-hover transition cursor-pointer">
-                    More Info
-                </button>
-            </div>
             <div ref={el} />
         </div>
     );

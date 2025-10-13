@@ -9,6 +9,7 @@ export const THEMES = [
     "Mongo",
 ] as const;
 export type ThemeName = (typeof THEMES)[number];
+export const THEME_CHANGE_EVENT = "theme-change";
 const KEY = "theme";
 
 const isTheme = (x: string | null): x is ThemeName =>
@@ -34,11 +35,15 @@ export function initTheme() {
             ? (localStorage.getItem(KEY) as ThemeName)
             : random());
 
-    document.documentElement.setAttribute("data-theme", chosen);
-    localStorage.setItem(KEY, chosen);
+    setTheme(chosen);
 }
 
 export function setTheme(name: ThemeName) {
     document.documentElement.setAttribute("data-theme", name);
     localStorage.setItem(KEY, name);
+
+    // Custom event for listening to theme changes
+    document.dispatchEvent(
+        new CustomEvent(THEME_CHANGE_EVENT, { detail: name })
+    );
 }
