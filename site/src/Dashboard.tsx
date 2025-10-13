@@ -1,4 +1,12 @@
-import { createEffect, For, onMount, Suspense, type Component } from "solid-js";
+import {
+    Accessor,
+    createEffect,
+    createMemo,
+    For,
+    onMount,
+    Suspense,
+    type Component,
+} from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createNote";
 import { Benchmark } from "./lib/data";
@@ -31,7 +39,16 @@ const Dashboard: Component = () => {
 };
 
 function BenchmarkCommit(props: { name: string; commits: string[] }) {
-    const allResults = props.commits.map((c) => createBenchmark(props.name, c));
+    const rawResults: [string, Accessor<Benchmark | undefined>][] =
+        props.commits.map((c) => [c, createBenchmark(props.name, c)]);
+
+    const yAxis = "iterations";
+
+    const results: Accessor<[string, Benchmark][]> = createMemo(() =>
+        rawResults
+            .map((v) => [v[0], v[1]()] as [string, Benchmark])
+            .filter((v) => v[1] !== undefined)
+    );
 
     const data: () => AlignedData = () => [
         [0, 5, 10],
@@ -119,6 +136,13 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
     });
 
     createEffect(() => {
+        const yValues = results().map((r) => [
+            r[0],
+            r[1].samples.flatMap((s) => s.iterations),
+        ]);
+
+        console.log(yValues);
+
         plot.setData(data());
     });
 
