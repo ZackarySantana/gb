@@ -2,6 +2,7 @@ import {
     Accessor,
     createEffect,
     createMemo,
+    createSignal,
     For,
     onMount,
     Suspense,
@@ -9,7 +10,7 @@ import {
 } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createNote";
-import { Benchmark } from "./lib/data";
+import { Benchmark, StatsKey } from "./lib/data";
 import { createBenchmark } from "./primitives/createBenchmark";
 import { A } from "@solidjs/router";
 import GitHash from "./components/GitHash";
@@ -42,18 +43,13 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
     const rawResults: [string, Accessor<Benchmark | undefined>][] =
         props.commits.map((c) => [c, createBenchmark(props.name, c)]);
 
-    const yAxis = "iterations";
+    const [yAxis, setYAxis] = createSignal<StatsKey>("ns_per_op_median");
 
     const results: Accessor<[string, Benchmark][]> = createMemo(() =>
         rawResults
             .map((v) => [v[0], v[1]()] as [string, Benchmark])
             .filter((v) => v[1] !== undefined)
     );
-
-    const data: () => AlignedData = () => [
-        [0, 5, 10],
-        [0, 10, 5],
-    ];
 
     let el!: HTMLDivElement;
     let plot!: uPlot;
@@ -151,17 +147,16 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
     });
 
     createEffect(() => {
-        const yValues = results().map(
-            (r) =>
-                [r[0], r[1].stats.ns_per_op_max / 1000 / 1000] as [
-                    string,
-                    number
-                ]
-        );
+        const values = results()
+            .map<[string, number | undefined]>((r) => [
+                r[0],
+                r[1].stats[yAxis()],
+            ])
+            .filter((v) => v[1] !== undefined && !isNaN(v[1]!));
 
-        const xValues = yValues.map((_, i) => i);
-
-        const commitLabels = yValues.map(([commit]) => commit.slice(0, 7));
+        const xValues = values.map((_, i) => i);
+        const yValues = values.map((v) => v[1]);
+        const commitLabels = values.map(([commit]) => commit.slice(0, 5));
 
         plot.axes[0].values = (_, splits) => {
             return splits.map((i) => {
@@ -170,14 +165,6 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
             });
         };
 
-        // plot.addHook("setCursor", (u) => {
-        //     const i = u.cursor.idx;
-        //     if (i != null && i >= 0 && i < pointCommits.length) {
-        //         const commit = pointCommits[i];
-        //         // use commit (tooltip, link, etc.)
-        //     }
-        // });
-        console.log("hooks", plot.hooks.setCursor);
         plot.hooks.setCursor = [
             (u) => {
                 const i = u.cursor.idx;
@@ -190,7 +177,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
             },
         ];
 
-        plot.setData([xValues, yValues.map((v) => v[1])]);
+        plot.setData([xValues, yValues]);
     });
 
     return (

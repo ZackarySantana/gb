@@ -47,6 +47,8 @@ type BenchCase = {
     };
 };
 
+export type StatsKey = keyof BenchCase["stats"];
+
 export type Note = {
     schema: number;
     commit: string;
