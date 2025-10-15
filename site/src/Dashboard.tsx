@@ -78,7 +78,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                     height: 0,
                 },
                 scales: {
-                    x: { auto: true },
+                    x: { distr: 2 },
                     y: { auto: true },
                 },
                 series: [
@@ -125,6 +125,21 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                 legend: {
                     show: false,
                 },
+                cursor: {
+                    drag: { x: true, y: true },
+                    points: {
+                        show: true,
+                        size: 8,
+                        width: 2,
+                        stroke: "#ffffff",
+                        fill: "#3b82f6",
+                    },
+                    show: true,
+                    lock: false,
+                    focus: {
+                        prox: 16,
+                    },
+                },
             },
             [],
             el
@@ -136,14 +151,46 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
     });
 
     createEffect(() => {
-        const yValues = results().map((r) => [
-            r[0],
-            r[1].samples.flatMap((s) => s.iterations),
-        ]);
+        const yValues = results().map(
+            (r) =>
+                [r[0], r[1].stats.ns_per_op_max / 1000 / 1000] as [
+                    string,
+                    number
+                ]
+        );
 
-        console.log(yValues);
+        const xValues = yValues.map((_, i) => i);
 
-        plot.setData(data());
+        const commitLabels = yValues.map(([commit]) => commit.slice(0, 7));
+
+        plot.axes[0].values = (_, splits) => {
+            return splits.map((i) => {
+                const idx = Math.round(i);
+                return commitLabels[idx] ?? "";
+            });
+        };
+
+        // plot.addHook("setCursor", (u) => {
+        //     const i = u.cursor.idx;
+        //     if (i != null && i >= 0 && i < pointCommits.length) {
+        //         const commit = pointCommits[i];
+        //         // use commit (tooltip, link, etc.)
+        //     }
+        // });
+        console.log("hooks", plot.hooks.setCursor);
+        plot.hooks.setCursor = [
+            (u) => {
+                const i = u.cursor.idx;
+                console.log("cursor idx: ", i);
+                if (i != null && i >= 0 && i < commitLabels.length) {
+                    const commit = commitLabels[i];
+                    console.log("hovering over: ", commit);
+                    // use commit (tooltip, link, etc.)
+                }
+            },
+        ];
+
+        plot.setData([xValues, yValues.map((v) => v[1])]);
     });
 
     return (
