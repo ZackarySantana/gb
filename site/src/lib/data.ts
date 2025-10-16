@@ -49,6 +49,63 @@ type BenchCase = {
 
 export type StatsKey = keyof BenchCase["stats"];
 
+export type StatInfo = {
+    label: string;
+    conversion: (v: number) => number;
+};
+
+export const Stats: Record<StatsKey, StatInfo> = {
+    count: { label: "Samples", conversion: (v) => v },
+    ns_per_op_mean: {
+        label: "Mean Time (ms)",
+        conversion: (v) => v / 1_000_000,
+    },
+    ns_per_op_median: {
+        label: "Median Time (ms)",
+        conversion: (v) => v / 1_000_000,
+    },
+    ns_per_op_min: {
+        label: "Min Time (ms)",
+        conversion: (v) => v / 1_000_000,
+    },
+    ns_per_op_max: {
+        label: "Max Time (ms)",
+        conversion: (v) => v / 1_000_000,
+    },
+    bytes_per_op_mean: {
+        label: "Mean Bytes",
+        conversion: (v) => v,
+    },
+    bytes_per_op_median: {
+        label: "Median Bytes",
+        conversion: (v) => v,
+    },
+    bytes_per_op_min: {
+        label: "Min Bytes",
+        conversion: (v) => v,
+    },
+    bytes_per_op_max: {
+        label: "Max Bytes",
+        conversion: (v) => v,
+    },
+    allocs_per_op_mean: {
+        label: "Mean Allocs",
+        conversion: (v) => v,
+    },
+    allocs_per_op_median: {
+        label: "Median Allocs",
+        conversion: (v) => v,
+    },
+    allocs_per_op_min: {
+        label: "Min Allocs",
+        conversion: (v) => v,
+    },
+    allocs_per_op_max: {
+        label: "Max Allocs",
+        conversion: (v) => v,
+    },
+};
+
 export type Note = {
     schema: number;
     commit: string;

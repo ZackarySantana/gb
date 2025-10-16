@@ -10,12 +10,11 @@ import {
 } from "solid-js";
 import { createManifest } from "./primitives/createManifest";
 import { createNote } from "./primitives/createNote";
-import { Benchmark, StatsKey } from "./lib/data";
+import { Benchmark, Stats, StatsKey } from "./lib/data";
 import { createBenchmark } from "./primitives/createBenchmark";
-import { A } from "@solidjs/router";
-import GitHash from "./components/GitHash";
-import uPlot, { AlignedData } from "uplot";
+import uPlot from "uplot";
 import { createProperty } from "./primitives/createProperty";
+import Select from "./components/Select";
 
 const Dashboard: Component = () => {
     const manifest = createManifest();
@@ -62,7 +61,6 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
 
         plot = new uPlot(
             {
-                title: props.name,
                 width: el.clientWidth,
                 height: 320,
                 pxAlign: 0,
@@ -152,10 +150,15 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                 r[0],
                 r[1].stats[yAxis()],
             ])
-            .filter((v) => v[1] !== undefined && !isNaN(v[1]!));
+            .filter((v) => v[1] !== undefined && !isNaN(v[1]!)) as [
+            string,
+            number
+        ][];
+
+        const statInfo = Stats[yAxis()];
 
         const xValues = values.map((_, i) => i);
-        const yValues = values.map((v) => v[1]);
+        const yValues = values.map((v) => statInfo.conversion(v[1]));
         const commitLabels = values.map(([commit]) => commit.slice(0, 5));
 
         plot.axes[0].values = (_, splits) => {
@@ -164,6 +167,8 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                 return commitLabels[idx] ?? "";
             });
         };
+        plot.axes[0].label = "Commit";
+        plot.axes[1].label = statInfo.label;
 
         plot.hooks.setCursor = [
             (u) => {
@@ -178,10 +183,34 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
         ];
 
         plot.setData([xValues, yValues]);
+        console.log("Updated plot data", props.name);
+    });
+
+    createEffect(() => {
+        console.log("yaxis changed", yAxis());
     });
 
     return (
         <div class="bg-bg-surface text-text-primary border border-border rounded-lg p-5">
+            <div class="flex gap-5 items-center">
+                <h1>{props.name}</h1>
+                <Select
+                    class="text-sm"
+                    onInput={(e) =>
+                        setYAxis(
+                            (e.target as HTMLSelectElement).value as StatsKey
+                        )
+                    }
+                >
+                    <For each={Object.keys(Stats) as StatsKey[]}>
+                        {(key) => (
+                            <option value={key} selected={key === yAxis()}>
+                                {Stats[key].label}
+                            </option>
+                        )}
+                    </For>
+                </Select>
+            </div>
             <div ref={el} />
         </div>
     );
