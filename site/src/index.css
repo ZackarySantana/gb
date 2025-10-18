@@ -239,7 +239,3 @@ select {
     padding-right: 32px;
     appearance: none;
 }
-
-.u-wrap {
-    display: flex;
-}

@@ -16,6 +16,8 @@ import uPlot from "uplot";
 import { createProperty } from "./primitives/createProperty";
 import Select from "./components/Select";
 
+import "uplot/dist/uPlot.min.css";
+
 const Dashboard: Component = () => {
     const manifest = createManifest();
 
