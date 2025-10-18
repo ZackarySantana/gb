@@ -141,9 +141,24 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
             el
         );
 
-        document.addEventListener("theme-change", () => {
-            plot.redraw();
+        let redraw = () => plot.redraw();
+
+        let themeChange = document.addEventListener("theme-change", redraw);
+
+        let ro = new ResizeObserver(() => {
+            plot.setSize({
+                width: el.clientWidth,
+                height: plot.height,
+            });
+            console.log("Resized plot", props.name);
         });
+        ro.observe(el);
+
+        return () => {
+            document.removeEventListener("theme-change", redraw);
+            ro.disconnect();
+            plot.destroy();
+        };
     });
 
     createEffect(() => {
