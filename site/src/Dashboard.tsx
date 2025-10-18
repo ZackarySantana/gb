@@ -52,8 +52,14 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
             .filter((v) => v[1] !== undefined)
     );
 
-    let el!: HTMLDivElement;
+    let cursorInfo!: HTMLDivElement;
+    let plotRef!: HTMLDivElement;
     let plot!: uPlot;
+    let [toolTip, setToolTip] = createSignal<{
+        x: number;
+        y: number;
+        commit: string;
+    } | null>(null);
 
     onMount(() => {
         const accent = createProperty("--color-accent");
@@ -63,7 +69,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
 
         plot = new uPlot(
             {
-                width: el.clientWidth,
+                width: plotRef.clientWidth,
                 height: 320,
                 pxAlign: 0,
                 select: {
@@ -131,28 +137,28 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                         fill: "#3b82f6",
                     },
                     show: true,
-                    lock: false,
+                    lock: true,
                     focus: {
                         prox: 16,
                     },
                 },
             },
             [],
-            el
+            plotRef
         );
 
         let redraw = () => plot.redraw();
 
-        let themeChange = document.addEventListener("theme-change", redraw);
+        document.addEventListener("theme-change", redraw);
 
         let ro = new ResizeObserver(() => {
             plot.setSize({
-                width: el.clientWidth,
+                width: plotRef.clientWidth,
                 height: plot.height,
             });
             console.log("Resized plot", props.name);
         });
-        ro.observe(el);
+        ro.observe(plotRef);
 
         return () => {
             document.removeEventListener("theme-change", redraw);
@@ -195,6 +201,11 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                     const commit = commitLabels[i];
                     console.log("hovering over: ", commit);
                     // use commit (tooltip, link, etc.)
+                    setToolTip({
+                        x: u.cursor.left ?? 0,
+                        y: u.cursor.top ?? 0,
+                        commit: commit,
+                    });
                 }
             },
         ];
@@ -228,7 +239,38 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                     </For>
                 </Select>
             </div>
-            <div ref={el} />
+            <div class="relative">
+                <div ref={plotRef} />
+
+                <div
+                    ref={cursorInfo}
+                    class="absolute"
+                    style={{
+                        display: toolTip() ? "block" : "none",
+                        left: toolTip() ? `${toolTip()!.x + 15}px` : "0px",
+                        top: toolTip() ? `${toolTip()!.y + 30}px` : "0px",
+                    }}
+                >
+                    {toolTip() && (
+                        <div class="bg-bg-app text-text-primary border border-border rounded-md p-2 shadow-lg whitespace-nowrap">
+                            <div>
+                                <strong>Commit:</strong> {toolTip()!.commit}
+                            </div>
+                            <div>
+                                <a
+                                    href={`https://github.com/commit/${
+                                        toolTip()!.commit
+                                    }`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    View Commit
+                                </a>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
