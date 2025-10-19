@@ -97,6 +97,11 @@ func (cmd *cmd) Export() *cli.Command {
 				return exportNote(errCtx, writeTasks)
 			})
 
+			// Clean existing output directory.
+			if err := os.RemoveAll(output); err != nil {
+				return fmt.Errorf("removing existing output directory: %w", err)
+			}
+
 			emptyCommits := 0
 			benchmarks := map[string]*ManifestBenchmark{}
 			for _, commit := range commits {
