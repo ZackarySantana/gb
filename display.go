@@ -20,12 +20,18 @@ func (cmd *cmd) Display() *cli.Command {
 		Name:  "display",
 		Usage: "Display benchmark notes via a UI",
 		Action: func(ctx context.Context, c *cli.Command) error {
+			benchmarkDirectory := "./benchmarks"
+
 			staticFS, err := fs.Sub(webFS, "public")
 			if err != nil {
 				return fmt.Errorf("getting sub filesystem: %w", err)
 			}
 
 			mux := http.NewServeMux()
+
+			mux.Handle("/data/", http.StripPrefix("/data/",
+				http.FileServer(http.Dir(benchmarkDirectory)),
+			))
 
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				reqPath := r.URL.Path
