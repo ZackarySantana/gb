@@ -38,10 +38,13 @@ func (cmd *cmd) Sync() *cli.Command {
 						if force {
 							args = append(args, "--force")
 						}
+						if c.Bool("verbose") {
+							args = append(args, "--verbose")
+						}
 						args = append(args, remote, ref)
 						cmd.logger.DebugContext(ctx, "git", "args", strings.Join(args, " "))
 						if out, err := runCmd(ctx, "", "git", args...); err != nil {
-							return fmt.Errorf("git push %s: %v: %s", ref, err, string(out))
+							return fmt.Errorf("'git %s': %v: %s", strings.Join(args, " "), err, string(out))
 						}
 						return nil
 					})
