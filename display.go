@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"path"
 
 	"github.com/urfave/cli/v3"
@@ -34,17 +33,7 @@ func (cmd *cmd) Display() *cli.Command {
 				http.FileServer(http.Dir(benchmarkDirectory)),
 			))
 
-			// print all files in the ./benchmarks directory for debugging
-			files, err := os.ReadDir(benchmarkDirectory)
-			if err != nil {
-				return fmt.Errorf("reading benchmark directory: %w", err)
-			}
-			for _, f := range files {
-				fmt.Println("Found benchmark file:", f.Name())
-			}
-
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				fmt.Println("Testing", r.URL.Path)
 				reqPath := r.URL.Path
 				if reqPath == "/" {
 					reqPath = "index.html"
@@ -79,7 +68,8 @@ func (cmd *cmd) Display() *cli.Command {
 				http.ServeContent(w, r, path.Base(reqPath), info.ModTime(), rs)
 			})
 
-			fmt.Println("Serving embedded site on", "http://localhost:8080")
+			cmd.logger.InfoContext(ctx, "display start", "address", "http://localhost:8080")
+
 			return http.ListenAndServe(":8080", mux)
 		},
 	}
