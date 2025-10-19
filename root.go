@@ -60,6 +60,7 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 		Commands: []*cli.Command{
 			cmd.Backfill(),
 			cmd.Compare(),
+			cmd.Display(),
 			cmd.Export(),
 			cmd.Show(),
 			cmd.Sync(),
