@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/urfave/cli/v3"
 )
@@ -70,7 +71,8 @@ func (cmd *cmd) Display() *cli.Command {
 
 			cmd.logger.InfoContext(ctx, "display start", "address", "http://localhost:8080")
 
-			return http.ListenAndServe(":8080", mux)
+			// Cache assets for 5 minutes to improve performance.
+			return http.ListenAndServe(":8080", cacheControlMiddleware(mux, 5*time.Minute))
 		},
 	}
 }
@@ -110,4 +112,13 @@ func (r *reader) Seek(offset int64, whence int) (int64, error) {
 	}
 	r.i = newPos
 	return newPos, nil
+}
+
+func cacheControlMiddleware(next http.Handler, ttl time.Duration) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set cache headers for all responses
+		w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(ttl.Seconds())))
+		w.Header().Set("Expires", time.Now().Add(ttl).UTC().Format(http.TimeFormat))
+		next.ServeHTTP(w, r)
+	})
 }
