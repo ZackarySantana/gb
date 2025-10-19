@@ -82,7 +82,7 @@
     --color-bg-elevated: #3a4a50;
     --color-text-primary: #eaf9f6;
     --color-text-secondary: #cfe9e5;
-    --color-text-link: #cfe9e5;
+    --color-text-link: #6b9e96;
     --color-border: #6a8e97;
     --color-border-strong: #7da1aa;
     --color-accent: #4b7e8b;
@@ -110,7 +110,7 @@
     --color-bg-elevated: #4b4f67;
     --color-text-primary: #fafafa;
     --color-text-secondary: #9aa3cf;
-    --color-text-link: #b6bdf0;
+    --color-text-link: #6d7eff;
     --color-border: #c5a8ff;
     --color-border-strong: #d1b7ff;
     --color-accent: #bd93f9;
@@ -139,7 +139,7 @@
     --color-bg-elevated: #e5e7eb;
     --color-text-primary: #0a0a0a;
     --color-text-secondary: #475569;
-    --color-text-link: #1f2937;
+    --color-text-link: #407fd8;
     --color-border: #cbd5e1;
     --color-border-strong: #94a3b8;
     --color-accent: #e23a4d;
@@ -238,4 +238,8 @@ select {
     background-size: 16px;
     padding-right: 32px;
     appearance: none;
+}
+
+.u-over {
+    cursor: pointer;
 }

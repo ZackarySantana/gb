@@ -17,6 +17,8 @@ import { createProperty } from "./primitives/createProperty";
 import Select from "./components/Select";
 
 import "uplot/dist/uPlot.min.css";
+import GitHash from "./components/GitHash";
+import { A } from "@solidjs/router";
 
 const Dashboard: Component = () => {
     const manifest = createManifest();
@@ -198,24 +200,16 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                 const i = u.cursor.idx;
                 console.log("cursor idx: ", i);
                 if (i != null && i >= 0 && i < commitLabels.length) {
-                    const commit = commitLabels[i];
-                    console.log("hovering over: ", commit);
-                    // use commit (tooltip, link, etc.)
                     setToolTip({
                         x: u.cursor.left ?? 0,
                         y: u.cursor.top ?? 0,
-                        commit: commit,
+                        commit: commitLabels[i],
                     });
                 }
             },
         ];
 
         plot.setData([xValues, yValues]);
-        console.log("Updated plot data", props.name);
-    });
-
-    createEffect(() => {
-        console.log("yaxis changed", yAxis());
     });
 
     return (
@@ -252,20 +246,41 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                     }}
                 >
                     {toolTip() && (
-                        <div class="bg-bg-app text-text-primary border border-border rounded-md p-2 shadow-lg whitespace-nowrap">
-                            <div>
-                                <strong>Commit:</strong> {toolTip()!.commit}
+                        <div class="bg-bg-app text-text-primary border border-border rounded-md p-4 shadow-lg max-w-[350px]">
+                            <div class="flex items-center gap-2">
+                                <GitHash hash={toolTip()!.commit} />
+                                <p class="whitespace-normal break-words line-clamp-1">
+                                    Something here something here Something here
+                                    something here Something here something here
+                                    Something here something here Something here
+                                    something here Something here something here
+                                    Something here something here Something here
+                                    something here Something here something here
+                                    Something here something here Something here
+                                    something here Something here something here
+                                </p>
                             </div>
-                            <div>
-                                <a
-                                    href={`https://github.com/commit/${
+                            <div class="mt-2">
+                                <A
+                                    href={`/${props.name}/commit/${
                                         toolTip()!.commit
                                     }`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    class="text-text-link hover:text-accent transition"
                                 >
-                                    View Commit
-                                </a>
+                                    Benchmarks
+                                </A>
+                                <p class="text-sm text-text-secondary">
+                                    Date: Today @ 5pm
+                                </p>
+                                <p class="text-sm text-text-secondary">
+                                    Author:{" "}
+                                    <A
+                                        href={`https://github.com/ZackarySantana`}
+                                        class="text-text-link hover:text-accent italic transition"
+                                    >
+                                        Zackary Santana
+                                    </A>
+                                </p>
                             </div>
                         </div>
                     )}
