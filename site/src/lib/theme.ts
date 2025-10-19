@@ -33,7 +33,7 @@ export function initTheme() {
         fromQuery() ||
         (isTheme(localStorage.getItem(KEY))
             ? (localStorage.getItem(KEY) as ThemeName)
-            : random());
+            : "Midnight");
 
     setTheme(chosen);
 }
