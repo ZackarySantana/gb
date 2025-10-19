@@ -8,7 +8,6 @@ const Benchmarks: Component = () => {
 
     return (
         <div class="py-8">
-            <p>Testing</p>
             <p>Commit: {params.commit}</p>
             <p>Benchmark: {params.benchmark}</p>
         </div>
