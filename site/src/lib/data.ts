@@ -136,7 +136,7 @@ export const getNote = query(async (commit: string, ref: string) => {
 export type Benchmark = BenchCase & {
     commitTitle: string;
     author: string;
-    date: Date;
+    date: string;
 };
 
 export const getBenchmark = query(async (name: string, commit: string) => {

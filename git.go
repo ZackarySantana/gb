@@ -143,6 +143,24 @@ func gitResolveCommit(ctx context.Context, ref string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+func gitShowCommitInfo(ctx context.Context, commit string) (map[string]any, error) {
+	out, err := runCmd(ctx, "", "git", "show", "-s", "--format=%H%n%an%n%ad%n%s", commit)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.SplitN(string(out), "\n", 5)
+	if len(lines) < 4 {
+		return nil, fmt.Errorf("unexpected git show output for commit %s", commit)
+	}
+	info := map[string]any{
+		"hash":        strings.TrimSpace(lines[0]),
+		"author":      strings.TrimSpace(lines[1]),
+		"date":        strings.TrimSpace(lines[2]),
+		"commitTitle": strings.TrimSpace(lines[3]),
+	}
+	return info, nil
+}
+
 func gitEmail(ctx context.Context) (string, error) {
 	out, err := runCmd(ctx, "", "git", "config", "user.email")
 	if err != nil {

@@ -24,7 +24,7 @@ type CommitInfo = {
     hash: string;
     commitTitle: string;
     author: string;
-    date: Date;
+    date: string;
 };
 
 const Dashboard: Component = () => {
@@ -162,13 +162,9 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
 
         document.addEventListener("theme-change", redraw);
 
-        let ro = new ResizeObserver(() => {
-            plot.setSize({
-                width: plotRef.clientWidth,
-                height: plot.height,
-            });
-            console.log("Resized plot", props.name);
-        });
+        let ro = new ResizeObserver(() =>
+            plot.setSize({ width: plotRef.clientWidth, height: plot.height })
+        );
         ro.observe(plotRef);
 
         return () => {
@@ -279,7 +275,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                                     Benchmarks
                                 </A>
                                 <p class="text-sm text-text-secondary">
-                                    Date: {toolTip()!.date.toDateString()}
+                                    Date: {toolTip()!.date}
                                 </p>
                                 <p class="text-sm text-text-secondary">
                                     Author:{" "}

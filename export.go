@@ -100,6 +100,11 @@ func (cmd *cmd) Export() *cli.Command {
 			emptyCommits := 0
 			benchmarks := map[string]*ManifestBenchmark{}
 			for _, commit := range commits {
+				commitInfo, err := gitShowCommitInfo(errCtx, commit)
+				if err != nil {
+					return fmt.Errorf("getting commit info for %s: %w", commit, err)
+				}
+
 				var noteRefs []string
 				for _, ref := range refs {
 					value, err := gitNotesShow(errCtx, ref, commit)
@@ -136,12 +141,19 @@ func (cmd *cmd) Export() *cli.Command {
 							}
 							bm.Commits = append(bm.Commits, commit)
 						}
+						benchmarkMap, err := asMap(bench)
+						if err != nil {
+							return fmt.Errorf("converting benchmark to map: %w", err)
+						}
+						for k, v := range commitInfo {
+							benchmarkMap[k] = v
+						}
 						select {
 						case <-errCtx.Done():
 							return errCtx.Err()
 						case writeTasks <- exportPayload{
 							output: filepath.Join(output, "benchmarks", bench.Name, commit+".json"),
-							data:   bench,
+							data:   benchmarkMap,
 						}:
 						}
 					}
@@ -212,4 +224,16 @@ func writeManifest(manifest *Manifest, output string) error {
 		return fmt.Errorf("writing manifest at %s: %w", manifestPath, err)
 	}
 	return nil
+}
+
+func asMap(m any) (map[string]any, error) {
+	data, err := json.Marshal(m)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling to map: %w", err)
+	}
+	var result map[string]any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling to map: %w", err)
+	}
+	return result, nil
 }
