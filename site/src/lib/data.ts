@@ -133,7 +133,11 @@ export const getNote = query(async (commit: string, ref: string) => {
     return res.json() as Promise<Note>;
 }, "note");
 
-export type Benchmark = BenchCase;
+export type Benchmark = BenchCase & {
+    commitTitle: string;
+    author: string;
+    date: Date;
+};
 
 export const getBenchmark = query(async (name: string, commit: string) => {
     const res = await fetch(`/data/benchmarks/${name}/${commit}.json`);

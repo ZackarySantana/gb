@@ -20,6 +20,13 @@ import "uplot/dist/uPlot.min.css";
 import GitHash from "./components/GitHash";
 import { A } from "@solidjs/router";
 
+type CommitInfo = {
+    hash: string;
+    commitTitle: string;
+    author: string;
+    date: Date;
+};
+
 const Dashboard: Component = () => {
     const manifest = createManifest();
 
@@ -57,11 +64,13 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
     let cursorInfo!: HTMLDivElement;
     let plotRef!: HTMLDivElement;
     let plot!: uPlot;
-    let [toolTip, setToolTip] = createSignal<{
-        x: number;
-        y: number;
-        commit: string;
-    } | null>(null);
+    let [toolTip, setToolTip] = createSignal<
+        | ({
+              x: number;
+              y: number;
+          } & CommitInfo)
+        | null
+    >(null);
 
     onMount(() => {
         const accent = createProperty("--color-accent");
@@ -171,12 +180,17 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
 
     createEffect(() => {
         const values = results()
-            .map<[string, number | undefined]>((r) => [
-                r[0],
+            .map<[CommitInfo, number | undefined]>((r) => [
+                {
+                    hash: r[0],
+                    commitTitle: r[1].commitTitle,
+                    author: r[1].author,
+                    date: r[1].date,
+                },
                 r[1].stats[yAxis()],
             ])
             .filter((v) => v[1] !== undefined && !isNaN(v[1]!)) as [
-            string,
+            CommitInfo,
             number
         ][];
 
@@ -184,7 +198,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
 
         const xValues = values.map((_, i) => i);
         const yValues = values.map((v) => statInfo.conversion(v[1]));
-        const commitLabels = values.map(([commit]) => commit.slice(0, 5));
+        const commitLabels = values.map(([commit]) => commit.hash.slice(0, 5));
 
         plot.axes[0].values = (_, splits) => {
             return splits.map((i) => {
@@ -198,12 +212,14 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
         plot.hooks.setCursor = [
             (u) => {
                 const i = u.cursor.idx;
-                console.log("cursor idx: ", i);
                 if (i != null && i >= 0 && i < commitLabels.length) {
                     setToolTip({
                         x: u.cursor.left ?? 0,
                         y: u.cursor.top ?? 0,
-                        commit: commitLabels[i],
+                        hash: commitLabels[i],
+                        author: values[i][0].author,
+                        commitTitle: values[i][0].commitTitle,
+                        date: values[i][0].date,
                     });
                 }
             },
@@ -248,37 +264,32 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                     {toolTip() && (
                         <div class="bg-bg-app text-text-primary border border-border rounded-md p-4 shadow-lg max-w-[350px]">
                             <div class="flex items-center gap-2">
-                                <GitHash hash={toolTip()!.commit} />
+                                <GitHash hash={toolTip()!.hash} />
                                 <p class="whitespace-normal break-words line-clamp-1">
-                                    Something here something here Something here
-                                    something here Something here something here
-                                    Something here something here Something here
-                                    something here Something here something here
-                                    Something here something here Something here
-                                    something here Something here something here
-                                    Something here something here Something here
-                                    something here Something here something here
+                                    {toolTip()!.commitTitle}
                                 </p>
                             </div>
                             <div class="mt-2">
                                 <A
                                     href={`/${props.name}/commit/${
-                                        toolTip()!.commit
+                                        toolTip()!.hash
                                     }`}
                                     class="text-text-link hover:text-accent transition"
                                 >
                                     Benchmarks
                                 </A>
                                 <p class="text-sm text-text-secondary">
-                                    Date: Today @ 5pm
+                                    Date: {toolTip()!.date.toDateString()}
                                 </p>
                                 <p class="text-sm text-text-secondary">
                                     Author:{" "}
                                     <A
-                                        href={`https://github.com/ZackarySantana`}
+                                        href={`https://github.com/${
+                                            toolTip()!.author
+                                        }`}
                                         class="text-text-link hover:text-accent italic transition"
                                     >
-                                        Zackary Santana
+                                        {toolTip()!.author}
                                     </A>
                                 </p>
                             </div>
