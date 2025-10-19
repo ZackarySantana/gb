@@ -8,6 +8,7 @@ import { initTheme } from "./lib/theme";
 import Dashboard from "./Dashboard";
 import NotFound from "./404";
 import { Layout } from "./views/Layout";
+import Benchmarks from "./Benchmarks";
 
 const root = document.getElementById("root");
 
@@ -23,6 +24,7 @@ render(
     () => (
         <Router root={Layout}>
             <Route path="/" component={Dashboard} />
+            <Route path="/:benchmark/commit/:commit" component={Benchmarks} />
             <Route path="*" component={NotFound} />
         </Router>
     ),
