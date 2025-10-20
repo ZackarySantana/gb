@@ -48,7 +48,7 @@ jobs:
 
             - name: Run benchmarks
               run: |
-                  gb backfill HEAD~5 -v
+                  gb backfill HEAD~5 --fast-abort -v
 
             - name: Push updated benchmarks
               run: gb sync -v

@@ -20,11 +20,13 @@ func (cmd *cmd) Backfill() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "re-benchmark even if note(s) exists"},
 			&cli.BoolFlag{Name: "single", Usage: "single commit to benchmark (bypasses range)"},
+			&cli.BoolFlag{Name: "fast-abort", Usage: "abort backfill on first benchmark failure"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			since := c.StringArg("since")
 			force := c.Bool("force")
 			single := c.Bool("single")
+			fastAbort := c.Bool("fast-abort")
 
 			if since == "" {
 				return fmt.Errorf("missing required argument: since")
@@ -58,6 +60,9 @@ func (cmd *cmd) Backfill() *cli.Command {
 				isSkipped, err := cmd.benchmark(ctx, notesRef, commit, benchmarkArgs, force)
 				if err != nil {
 					failed = append(failed, fmt.Errorf("commit %s: %w", commit, err))
+					if fastAbort {
+						break
+					}
 					continue
 				}
 				if isSkipped {
