@@ -5,6 +5,7 @@ import {
     createSignal,
     For,
     onMount,
+    Show,
     Suspense,
     type Component,
 } from "solid-js";
@@ -214,6 +215,8 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                         commitTitle: values[i][0].commitTitle,
                         date: values[i][0].date,
                     });
+                } else {
+                    setToolTip(null);
                 }
             },
         ];
@@ -250,11 +253,17 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                     class="absolute"
                     style={{
                         display: toolTip() ? "block" : "none",
-                        left: toolTip() ? `${toolTip()!.x + 15}px` : "0px",
+                        left: toolTip()
+                            ? `${
+                                  toolTip()!.x +
+                                  15 -
+                                  (toolTip()!.x / plotRef.clientWidth) * 300
+                              }px`
+                            : "0px",
                         top: toolTip() ? `${toolTip()!.y + 30}px` : "0px",
                     }}
                 >
-                    {toolTip() && (
+                    <Show when={toolTip() != null}>
                         <div class="bg-bg-app text-text-primary border border-border rounded-md p-4 shadow-lg max-w-[350px]">
                             <div class="flex items-center gap-2">
                                 <GitHash hash={toolTip()!.hash} />
@@ -287,7 +296,7 @@ function BenchmarkCommit(props: { name: string; commits: string[] }) {
                                 </p>
                             </div>
                         </div>
-                    )}
+                    </Show>
                 </div>
             </div>
         </div>
