@@ -188,12 +188,12 @@ func runCmd(ctx context.Context, dir string, bin string, args ...string) ([]byte
 	if err != nil {
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
-			return out, errExit
+			return out, fmt.Errorf("%w: %s", errExit, out)
 		}
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-			return out, err
+			return out, fmt.Errorf("%w: %s", err, out)
 		}
-		return out, fmt.Errorf("command \"%s %s\" returned: %w", bin, strings.Join(args, " "), err)
+		return out, fmt.Errorf("command \"%s %s\" returned: %w %s", bin, strings.Join(args, " "), err, out)
 	}
 	return out, nil
 }
