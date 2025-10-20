@@ -54,6 +54,26 @@ gb sync
 
 ![Sync Example](./imgs/sync.png)
 
+Export notes in to a directory
+
+```bash
+gb export HEAD~3
+# For more options
+gb export --help
+```
+
+![Export Example](./imgs/export.png)
+
+Display a UI for comparing benchmarks:
+
+```bash
+gb display
+```
+
+![Display Example](./imgs/display.png)
+
+(This looks for a ./benchmarks directory with exported benchmark notes)
+
 ## Manual
 
 NAME:
