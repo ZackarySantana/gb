@@ -46,6 +46,11 @@ jobs:
             - name: Sync previous benchmarks
               run: gb sync -v
 
+            - name: Set Git user
+              run: |
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
             - name: Run benchmarks
               run: |
                   gb backfill HEAD~5 --fast-abort -v
