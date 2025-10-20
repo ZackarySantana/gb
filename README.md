@@ -86,10 +86,13 @@ USAGE:
 
 COMMANDS:
 
--   Backfill benchmark notes with missing commits since a ref
--   Compare stored notes for two refs
--   Show stored note for a commit/ref
--   Sync benchmark notes with remote (push/fetch)
+-   backfill Backfill benchmark notes with missing commits since a ref
+-   compare Compare stored notes for two refs
+-   display Display benchmark notes via a UI
+-   export Export benchmark notes to a file
+-   show Show stored note for a commit/ref
+-   sync Sync benchmark notes with remote (push/fetch)
+-   help, h Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
 
@@ -98,5 +101,5 @@ GLOBAL OPTIONS:
 -   --benchtime string benchtime duration (e.g. 2s)
 -   --bench string benchmark regex (default: ".")
 -   --pkgs string comma-separated package list (default: "./...")
--   --notes-ref string override notes ref (will always be prefixed with refs/notes/gb/) (default: "601e17bd28b350c5/linux-amd64-go1.25.1")
+-   --notes-ref string override notes ref (will always be prefixed with refs/notes/gb/) (default: "601e17bd28b350c5/linux-arm64-go1.25.1")
 -   --help, -h show help
