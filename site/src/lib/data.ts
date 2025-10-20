@@ -15,7 +15,7 @@ export type Manifest = {
 };
 
 export const getManifest = query(async () => {
-    const res = await fetch("/data/manifest.json", { cache: "force-cache" });
+    const res = await fetch("./data/manifest.json", { cache: "force-cache" });
     if (!res.ok) throw new Error(`manifest load failed: ${res.status}`);
     return res.json() as Promise<Manifest>;
 }, "manifest");
@@ -126,7 +126,7 @@ export type Note = {
 };
 
 export const getNote = query(async (commit: string, ref: string) => {
-    const res = await fetch(`/data/commits/${commit}/${ref}.json`, {
+    const res = await fetch(`./data/commits/${commit}/${ref}.json`, {
         cache: "force-cache",
     });
     if (!res.ok) throw new Error(`note load failed: ${res.status}`);
@@ -140,7 +140,7 @@ export type Benchmark = BenchCase & {
 };
 
 export const getBenchmark = query(async (name: string, commit: string) => {
-    const res = await fetch(`/data/benchmarks/${name}/${commit}.json`);
+    const res = await fetch(`./data/benchmarks/${name}/${commit}.json`);
     if (!res.ok) throw new Error(`benchmark load failed: ${res.status}`);
     return res.json() as Promise<Benchmark>;
 }, "benchmark");
