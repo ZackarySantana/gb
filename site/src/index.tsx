@@ -1,7 +1,7 @@
 /* @refresh reload */
 import "./index.css";
 import { render } from "solid-js/web";
-import { Route, Router } from "@solidjs/router";
+import { HashRouter, Route, Router } from "@solidjs/router";
 import "solid-devtools";
 
 import { initTheme } from "./lib/theme";
@@ -22,11 +22,11 @@ initTheme();
 
 render(
     () => (
-        <Router root={Layout}>
+        <HashRouter root={Layout}>
             <Route path="/" component={Dashboard} />
             <Route path="/:benchmark/commit/:commit" component={Benchmarks} />
             <Route path="*" component={NotFound} />
-        </Router>
+        </HashRouter>
     ),
     root!
 );
