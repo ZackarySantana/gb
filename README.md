@@ -2,6 +2,8 @@
 
 `gb` stores benchmarks in git notes, making it easy to track performance changes over time.
 
+[Demo](https://zackarysantana.github.io/gb/#/)
+
 ## Installation
 
 ```bash
