@@ -1,0 +1,86 @@
+name: benchmark
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch: {}
+
+concurrency:
+    group: "pages"
+    cancel-in-progress: true
+
+jobs:
+    bench:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pages: write
+            id-token: write
+        env:
+            GOMAXPROCS: "1"
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.25.1"
+
+            - name: Cache Go modules
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/go/pkg/mod
+                      ~/.cache/go-build
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go-
+
+            - name: Install gb
+              run: go install github.com/zackarysantana/gb
+
+            - name: Sync previous benchmarks
+              run: gb sync
+
+            - name: Run benchmarks
+              run: |
+                  gb backfill HEAD~5
+
+            - name: Push updated benchmarks
+              run: gb sync
+
+            - name: Export benchmarks
+              run: gb export HEAD~80
+
+            - name: Prepare site payload
+              run: |
+                  # Ensure base site exists
+                  test -d public || { echo "public/ not found"; exit 1; }
+
+                  # Fresh data dir
+                  rm -rf public/data
+                  mkdir -p public/data
+
+                  # Copy exported benchmarks into public/data
+                  if [ -d benchmarks ]; then
+                      # Use rsync to preserve structure and overwrite cleanly
+                      rsync -a --delete benchmarks/ public/data/
+                  else
+                      echo "No benchmarks/ directory found to publish"
+                  fi
+
+            - name: Setup Pages
+              uses: actions/configure-pages@v5
+
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: ./public
+
+            - name: Deploy to GitHub Pages
+              id: deploy
+              uses: actions/deploy-pages@v4
