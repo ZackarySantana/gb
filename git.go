@@ -111,7 +111,16 @@ func listAllNotesRefs(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("git for-each-ref refs/notes: %w", err)
 	}
-	return strings.Split(strings.TrimSpace(string(out)), "\n"), nil
+	refs := strings.Split(strings.TrimSpace(string(out)), "\n")
+	filteredRefs := []string{}
+	for _, ref := range refs {
+		ref = strings.TrimSpace(ref)
+		if ref == "" {
+			continue
+		}
+		filteredRefs = append(filteredRefs, ref)
+	}
+	return filteredRefs, nil
 }
 
 func listAllNotesRefsForCommit(ctx context.Context, commit string) (map[string][]byte, error) {
