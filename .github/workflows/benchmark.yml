@@ -44,17 +44,17 @@ jobs:
               run: go install github.com/zackarysantana/gb
 
             - name: Sync previous benchmarks
-              run: gb sync
+              run: gb sync -v
 
             - name: Run benchmarks
               run: |
-                  gb backfill HEAD~5
+                  gb backfill HEAD~5 -v
 
             - name: Push updated benchmarks
-              run: gb sync
+              run: gb sync -v
 
             - name: Export benchmarks
-              run: gb export HEAD~80
+              run: gb export HEAD~80 -v
 
             - name: Prepare site payload
               run: |

@@ -23,7 +23,6 @@ func (cmd *cmd) Sync() *cli.Command {
 
 			cmd.logger.InfoContext(ctx, "sync start", "remote", remote, "force", force)
 
-			cmd.logger.InfoContext(ctx, "pushing", "remote", remote, "force", force)
 			refs, err := listAllNotesRefs(ctx)
 			if err != nil {
 				return fmt.Errorf("listing notes refs: %w", err)
@@ -31,8 +30,11 @@ func (cmd *cmd) Sync() *cli.Command {
 			if len(refs) == 0 {
 				cmd.logger.InfoContext(ctx, "no notes refs found, nothing to push")
 			} else {
+				cmd.logger.InfoContext(ctx, "pushing", "remote", remote, "force", force)
+
 				group, ctx := errgroup.WithContext(ctx)
 				for _, ref := range refs {
+					cmd.logger.DebugContext(ctx, "start pushing", "ref", ref)
 					group.Go(func() error {
 						args := []string{"push"}
 						if force {
