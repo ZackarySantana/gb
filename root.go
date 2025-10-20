@@ -16,6 +16,7 @@ func (cmd *cmd) Root(logLevel *slog.LevelVar) *cli.Command {
 	gitEmail, err := gitEmail(context.Background())
 	if err != nil {
 		cmd.logger.Error("unable to get git user email to generate a unique note", "error", err)
+		gitEmail = "fallback"
 	}
 	sum := sha1.Sum([]byte(gitEmail))
 	gv := runtime.Version()
