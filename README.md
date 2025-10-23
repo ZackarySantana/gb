@@ -1,8 +1,20 @@
 # Go Benchmark Notes Manager
 
-`gb` stores benchmarks in git notes, making it easy to track performance changes over time.
-
 [Demo](https://zackarysantana.github.io/gb/#/)
+
+Do you want to easily track Go benchmark performance over time? Do you want a CLI tool that bundles a nice looking UI that displays graphs comparing benchmark results between commits? You want `gb`.
+
+`gb` is a CLI tool that runs Go benchmarks, stores the notes in git notes, and provides commands to view and compare benchmark results over time.
+
+At a high level, `gb` provides the following commands:
+
+-   [backfill](#backfill): Run benchmarks for commits that do not have benchmark notes yet.
+-   [show](#show): View benchmark notes for a specific commit.
+-   [compare](#compare): Compare benchmark results between two commits.
+-   [sync](#sync): Push and fetch benchmark notes to/from remote.
+-   [export](#export): Export benchmark notes to a directory.
+-   [display](#display): Display a static UI for comparing benchmark results (E.g. the [Demo](https://zackarysantana.github.io/gb/#/) site).
+-   [help](#help): View help for `gb` commands.
 
 ## Installation
 
@@ -11,6 +23,8 @@ go install github.com/zackarysantana/gb
 ```
 
 ## Usage
+
+### Backfill
 
 Run benchmarks:
 
@@ -22,6 +36,8 @@ gb backfill HEAD~5
 ![Backfill Example](./imgs/backfill.png)
 
 View benchmark notes for a specific commit:
+
+### Show
 
 ```bash
 gb show HEAD~3
@@ -38,6 +54,8 @@ gb show HEAD~4 --all
 (arm64 vs amd64 benchmarks shown below)
 ![Show All Example](./imgs/show-all.png)
 
+### Compare
+
 Compare benchmarks between two commits:
 
 ```bash
@@ -48,6 +66,8 @@ gb compare
 
 ![Compare Example](./imgs/compare.png)
 
+### Sync
+
 Sync notes with remote:
 
 ```bash
@@ -55,6 +75,8 @@ gb sync
 ```
 
 ![Sync Example](./imgs/sync.png)
+
+### Export
 
 Export notes in to a directory
 
@@ -65,6 +87,8 @@ gb export --help
 ```
 
 ![Export Example](./imgs/export.png)
+
+### Display
 
 Display a UI for comparing benchmarks:
 
