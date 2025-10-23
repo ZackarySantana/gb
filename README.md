@@ -22,6 +22,10 @@ At a high level, `gb` provides the following commands:
 go install github.com/zackarysantana/gb
 ```
 
+## GitHub Pages
+
+One of the most elegant thing about `gb` is that the generated site is completely static. The [Demo](https://zackarysantana.github.io/gb/#/) site is hosted on GitHub Pages. To do something similar for your own repository, look inside [.github/workflows/benchmarks.yml](.github/workflows/benchmark.yml).
+
 ## Usage
 
 ### Backfill
